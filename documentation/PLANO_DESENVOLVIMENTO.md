@@ -51,10 +51,15 @@ passos_magicos/
 - [x] Copiar CSV para `/data` — 2026-03-02
 - [x] Criar `.gitignore` (ignorar `__pycache__`, `.h5`, `.pkl`, dados grandes) — 2026-03-02
 
+### 0.4 Devcontainer (VS Code)
+- [x] Criar `.devcontainer/Dockerfile` (Python 3.10-bullseye, libgomp1, libhdf5-dev) — 2026-03-02
+- [x] Criar `.devcontainer/devcontainer.json` (extensions, portas 8501+8888, postCreateCommand) — 2026-03-02
+- [x] Verificar que `.devcontainer/` está rastreado no git (não ignorado) — 2026-03-02
+
 ### 0.2 Repositório GitHub
-- [ ] Fazer o primeiro `git push` com a estrutura base
-- [ ] Verificar que todos os arquivos estão no GitHub: https://github.com/DELSOBRINHO/passos_magicos
-- [ ] Confirmar branch `main` como padrão
+- [x] Fazer o primeiro `git push` com a estrutura base — 2026-03-02
+- [x] Verificar que todos os arquivos estão no GitHub: https://github.com/DELSOBRINHO/passos_magicos — 2026-03-02
+- [x] Confirmar branch `main` como padrão — 2026-03-02
 
 ### 0.3 Dependências
 - [x] Instalar: `pandas, numpy, matplotlib, scipy, scikit-learn` — pré-existentes
@@ -62,7 +67,8 @@ passos_magicos/
 - [x] Instalar: `nbformat, notebook` — 2026-03-02
 - [x] Instalar: `streamlit` — 2026-03-02
 - [ ] Instalar: `tensorflow` (necessário para treinar modelo MLP completo)
-- [ ] Verificar `requirements.txt` cobrindo todas as dependências do Streamlit Cloud
+- [x] Separar `requirements.txt` (Streamlit Cloud, usa `tensorflow-cpu`) de `requirements-dev.txt` (dev completo) — 2026-03-02
+- [x] Verificar `requirements.txt` cobrindo todas as dependências do Streamlit Cloud — 2026-03-02
 
 ---
 
@@ -343,4 +349,7 @@ passos_magicos/
 | 2026-03-02 | Sessão 1 | Exploração do dataset: 860×42, encoding confirmado, colunas mapeadas |
 | 2026-03-02 | Sessão 2 | Criação da pasta documentation e PLANO_DESENVOLVIMENTO.md |
 | 2026-03-02 | Sessão 2 | Criação do `.gitignore` |
+| 2026-03-02 | Sessão 2 | Separação requirements.txt (app/Cloud) e requirements-dev.txt (dev) |
+| 2026-03-02 | Sessão 2 | Criação do `.devcontainer/Dockerfile` e `devcontainer.json` |
+| 2026-03-02 | Sessão 2 | Primeiro commit e push → https://github.com/DELSOBRINHO/passos_magicos |
 

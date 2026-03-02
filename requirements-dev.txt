@@ -1,0 +1,32 @@
+# ──────────────────────────────────────────────────────────────────
+# requirements-dev.txt  –  Ferramentas de DESENVOLVIMENTO
+# Instale junto com requirements.txt dentro do devcontainer:
+#   pip install -r requirements.txt -r requirements-dev.txt
+# ──────────────────────────────────────────────────────────────────
+
+# Inclui tudo do app
+-r requirements.txt
+
+# TensorFlow completo (GPU/CPU) para treino dos modelos
+# Substitui tensorflow-cpu do requirements.txt durante o dev
+tensorflow>=2.13.0
+
+# Notebooks
+jupyterlab>=4.0.0
+nbformat>=5.9.0
+nbconvert>=7.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.1.0
+
+# Qualidade de código
+black>=23.0.0
+ruff>=0.1.0
+isort>=5.12.0
+
+# Testes
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Utilitários de análise extra
+plotly>=5.18.0
+

@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Ambientes virtuais
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Modelos treinados (arquivos grandes – gerar localmente via notebook)
+app/modelo_risco.h5
+app/modelo_risco.pkl
+
+# Scalers e metadados (regenerar com notebook)
+# Remova as linhas abaixo se quiser versioná-los no GitHub
+# app/scaler.pkl
+# app/modelo_meta.pkl
+# app/features.pkl
+
+# CSV na raiz (duplicado — usar apenas data/)
+BASE DE DADOS PEDE 2024 - DATATHON - PEDE2022.csv
+
+# Figuras geradas (regenerar com notebook)
+data/fig_*.png
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+# .vscode/ está rastreado para compartilhar settings do workspace
+# Apenas arquivos pessoais/locais são ignorados:
+.vscode/*.code-snippets
+.idea/
+*.swp
+*.swo
+
+# Devcontainer – RASTREADO (não ignorar)
+# .devcontainer/ deve estar no git para ambiente consistente
+
+# Logs
+*.log
+logs/
+
+# Streamlit cache
+.streamlit/secrets.toml
+

@@ -1,0 +1,83 @@
+{
+  "name": "Passos Mágicos – Datathon Dev",
+
+  // Usa o Dockerfile local para construir a imagem
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // ── Extensões VS Code instaladas automaticamente ─────────────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        "mechatroner.rainbow-csv",
+        "eamodio.gitlens",
+        "ms-python.isort",
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-portuguese-brazilian"
+      ],
+      "settings": {
+        // Python
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": true,
+
+        // Formatação automática ao salvar
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+
+        // Jupyter
+        "jupyter.notebookFileRoot": "${workspaceFolder}/notebooks",
+        "jupyter.askForKernelRestart": false,
+
+        // Streamlit – terminal integrado
+        "terminal.integrated.defaultProfile.linux": "bash",
+
+        // Ruff (linter)
+        "ruff.enable": true,
+        "ruff.organizeImports": false
+      }
+    }
+  },
+
+  // ── Portas encaminhadas ───────────────────────────────────────────────────
+  "forwardPorts": [8501, 8888],
+  "portsAttributes": {
+    "8501": {
+      "label": "Streamlit App",
+      "onAutoForward": "openBrowser"
+    },
+    "8888": {
+      "label": "JupyterLab",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // ── Comando executado após a criação do container ─────────────────────────
+  // Instala todas as dependências (app + dev)
+  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt -r requirements-dev.txt",
+
+  // ── Usuário remoto (não root) ─────────────────────────────────────────────
+  "remoteUser": "vscode",
+
+  // ── Variáveis de ambiente ─────────────────────────────────────────────────
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}",
+    // Desabilita telemetria do TensorFlow
+    "TF_CPP_MIN_LOG_LEVEL": "2"
+  }
+}
+

@@ -25,30 +25,13 @@
         "streetsidesoftware.code-spell-checker-portuguese-brazilian"
       ],
       "settings": {
-        // Python
+        // Configurações básicas do interpretador (não causam aviso de schema)
         "python.defaultInterpreterPath": "/usr/local/bin/python",
         "python.terminal.activateEnvironment": true,
-
-        // Formatação automática ao salvar
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "[python]": {
-          "editor.defaultFormatter": "ms-python.black-formatter",
-          "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-          }
-        },
-
-        // Jupyter
         "jupyter.notebookFileRoot": "${workspaceFolder}/notebooks",
         "jupyter.askForKernelRestart": false,
-
-        // Streamlit – terminal integrado
-        "terminal.integrated.defaultProfile.linux": "bash",
-
-        // Ruff (linter)
-        "ruff.enable": true,
-        "ruff.organizeImports": false
+        "terminal.integrated.defaultProfile.linux": "bash"
+        // Demais settings (formatadores, linters) estão em .vscode/settings.json
       }
     }
   },

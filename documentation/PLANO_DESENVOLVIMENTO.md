@@ -66,7 +66,7 @@ passos_magicos/
 - [x] Instalar: `seaborn` — 2026-03-02
 - [x] Instalar: `nbformat, notebook` — 2026-03-02
 - [x] Instalar: `streamlit` — 2026-03-02
-- [ ] Instalar: `tensorflow` (necessário para treinar modelo MLP completo)
+- [x] Instalar: `tensorflow` (necessário para treinar modelo MLP completo) — 2026-03-03
 - [x] Separar `requirements.txt` (Streamlit Cloud, usa `tensorflow-cpu`) de `requirements-dev.txt` (dev completo) — 2026-03-02
 - [x] Verificar `requirements.txt` cobrindo todas as dependências do Streamlit Cloud — 2026-03-02
 
@@ -352,4 +352,5 @@ passos_magicos/
 | 2026-03-02 | Sessão 2 | Separação requirements.txt (app/Cloud) e requirements-dev.txt (dev) |
 | 2026-03-02 | Sessão 2 | Criação do `.devcontainer/Dockerfile` e `devcontainer.json` |
 | 2026-03-02 | Sessão 2 | Primeiro commit e push → https://github.com/DELSOBRINHO/passos_magicos |
+| 2026-03-03 | Sessão 3 | Instalação: `tensorflow-cpu` no ambiente de desenvolvimento; atualização de `requirements-dev.txt` e commit. |
 

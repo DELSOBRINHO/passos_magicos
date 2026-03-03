@@ -5,6 +5,12 @@ secondaryBackgroundColor = "#F5F7FA"
 textColor = "#1A1A1A"
 font = "sans serif"
 
+# Sidebar theme overrides to avoid "Invalid color passed" warnings in console
+[theme.sidebar]
+widgetBackgroundColor = "#FFFFFF"
+widgetBorderColor = "#E6E9EE"
+skeletonBackgroundColor = "#F5F7FA"
+
 [server]
 headless = true
 port = 8501

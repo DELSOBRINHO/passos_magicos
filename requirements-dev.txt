@@ -7,9 +7,9 @@
 # Inclui tudo do app
 -r requirements.txt
 
-# TensorFlow completo (GPU/CPU) para treino dos modelos
-# Substitui tensorflow-cpu do requirements.txt durante o dev
-tensorflow>=2.13.0
+# TensorFlow para treino dos modelos (usar a variante CPU em dev para menor uso de recursos)
+# Substitui a referência em requirements.txt durante o devcontainer
+tensorflow-cpu>=2.13.0
 
 # Notebooks
 jupyterlab>=4.0.0

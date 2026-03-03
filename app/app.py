@@ -9,6 +9,7 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import streamlit.components.v1 as components
 
 # ─── Configuração da página ───────────────────────────────────────────────────
 st.set_page_config(
@@ -16,6 +17,20 @@ st.set_page_config(
     page_icon="🌟",
     layout="wide",
     initial_sidebar_state="expanded"
+)
+
+# Remove theme keys potentially saved in the browser localStorage that cause
+# console warnings in some clients. This is a small, safe, temporary workaround
+# and can be removed later once users' local storage is clean.
+components.html(
+        """<script>
+        try {
+            localStorage.removeItem('stActiveTheme-/v2');
+            localStorage.removeItem('streamlit:theme');
+            localStorage.removeItem('globalTheme');
+        } catch(e) { console.warn('localStorage clear failed', e); }
+        </script>""",
+        height=0,
 )
 
 # ─── Estilos CSS ─────────────────────────────────────────────────────────────

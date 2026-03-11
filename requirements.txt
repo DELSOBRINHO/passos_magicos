@@ -1,6 +1,6 @@
 # ──────────────────────────────────────────────────────────────────
 # requirements.txt  –  Dependências da APLICAÇÃO STREAMLIT
-# Usado pelo Streamlit Community Cloud e pelo devcontainer.
+# Usado pelo Streamlit Community Cloud.
 # Para desenvolvimento completo (notebooks), instale também:
 #   pip install -r requirements-dev.txt
 # ──────────────────────────────────────────────────────────────────
@@ -18,13 +18,5 @@ seaborn>=0.13.0
 
 # Machine Learning
 scikit-learn>=1.3.0
-scipy>=1.11.0
-
-# Deep Learning (carregamento do modelo treinado)
-# Streamlit Cloud suporta tensorflow-cpu para reduzir tamanho da imagem
-tensorflow-cpu>=2.13.0
-
-# Serialização
-# pickle é built-in no Python 3.8+; linha abaixo para versões antigas
-pickle5>=0.0.12; python_version < '3.8'
+joblib>=1.3.0
 

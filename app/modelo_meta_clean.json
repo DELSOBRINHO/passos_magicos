@@ -1,0 +1,38 @@
+{
+  "features": [
+    "fase",
+    "ano_nasc",
+    "idade_22",
+    "ano_ingresso",
+    "cf",
+    "ct",
+    "no_av",
+    "pedra_22_num",
+    "ipp",
+    "pedra_21_num",
+    "evolucao_pedra",
+    "sent_len",
+    "sent_score",
+    "cg_num",
+    "iaa_num",
+    "ieg_num",
+    "ips_num",
+    "ida_num",
+    "matem_num",
+    "portug_num",
+    "ingles_num",
+    "ipv_num"
+  ],
+  "threshold": 0.35,
+  "cv_auc_mean": 0.9861,
+  "cv_auc_std": 0.0123,
+  "test_auc": 0.9955,
+  "leakage_removed": [
+    "ian_num"
+  ],
+  "num_features": 22,
+  "y_distribution": {
+    "1": 601,
+    "0": 259
+  }
+}

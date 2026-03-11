@@ -8,6 +8,11 @@ font = "sans serif"
 [server]
 headless = true
 
+[runtime]
+# Fixa Python 3.11 — compatível com scikit-learn, joblib, pandas, matplotlib
+# Python 3.14 ainda é experimental e pode quebrar dependências
+
+
 [browser]
 gatherUsageStats = false
 

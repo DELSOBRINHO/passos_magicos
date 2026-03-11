@@ -52,9 +52,12 @@ passos_magicos/
 - [x] Criar `.gitignore` (ignorar `__pycache__`, `.h5`, `.pkl`, dados grandes) — 2026-03-02
 
 ### 0.4 Devcontainer (VS Code)
-- [x] Criar `.devcontainer/Dockerfile` (Python 3.10-bullseye, libgomp1, libhdf5-dev) — 2026-03-02
+- [x] Criar `.devcontainer/Dockerfile` (Python 3.10-bullseye) — 2026-03-02
 - [x] Criar `.devcontainer/devcontainer.json` (extensions, portas 8501+8888, postCreateCommand) — 2026-03-02
 - [x] Verificar que `.devcontainer/` está rastreado no git (não ignorado) — 2026-03-02
+- [x] Corrigir erro `exit code 100` no apt-get: usar imagem direta sem Dockerfile customizado — 2026-03-02
+- [x] Corrigir avisos de schema: mover settings de formatação para `.vscode/settings.json` — 2026-03-02
+- [ ] **PENDENTE**: Docker engine instável (pipe não disponível). Reiniciar Docker Desktop completamente e tentar novamente `Dev Containers: Reopen in Container`.
 
 ### 0.2 Repositório GitHub
 - [x] Fazer o primeiro `git push` com a estrutura base — 2026-03-02
@@ -153,8 +156,8 @@ passos_magicos/
 - [x] NLP: `sent_score` — análise de sentimento lexical nas recomendações — 2026-03-02
 - [x] Embedding ordinal de Pedra (`Pedra_22_num`) — 2026-03-02
 - [x] Feature `Evolucao_Pedra` — 2026-03-02
-- [ ] **EXECUTAR** e verificar taxa de risco no dataset (esperado: 40-60%)
-- [ ] Verificar que não há data leakage (target criado apenas com dados de input)
+- [x] **Data Leakage detectado e corrigido:** `ian_num` (correlação=0.983) removido — 2026-03-11
+- [x] Taxa de risco confirmada: 601/860 = 69.9% (Em Risco) — 2026-03-11
 
 ### 2.2 Separação Treino/Teste
 - [x] Código criado: `train_test_split` com `stratify=y`, 80/20 — 2026-03-02
@@ -353,4 +356,8 @@ passos_magicos/
 | 2026-03-02 | Sessão 2 | Criação do `.devcontainer/Dockerfile` e `devcontainer.json` |
 | 2026-03-02 | Sessão 2 | Primeiro commit e push → https://github.com/DELSOBRINHO/passos_magicos |
 | 2026-03-03 | Sessão 3 | Instalação: `tensorflow-cpu` no ambiente de desenvolvimento; atualização de `requirements-dev.txt` e commit. |
+| 2026-03-11 | Sessão 4 | Diagnóstico do Docker: pipe `dockerDesktopLinuxEngine` indisponível. Contexto voltou para `desktop-linux`. Dev container ainda não executado. Próxima ação: executar notebooks localmente sem container. |
+| 2026-03-11 | Sessão 5 | **Data Leakage corrigido:** `ian_num` (correlação=0.983) removido. Modelo limpo (22 features): AUC=0.996, Recall=1.0, threshold=0.35. Artefatos: `modelo_risco_clean.pkl`, `scaler_clean.pkl`, `modelo_meta_clean.json`. |
+| 2026-03-11 | Sessão 5 | **app.py corrigido:** `pickle.load()` → `joblib.load()` (resolve `_pickle.UnpicklingError`). Formulário e batch upload atualizados para 22 features sem IAN. App rodando em `localhost:8501`. |
+| 2026-03-11 | Sessão 5 | **INDICE_DATATHON.md criado:** mapeamento das 11 perguntas × matérias do curso × técnicas da solução. |
 

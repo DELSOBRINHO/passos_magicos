@@ -5,7 +5,8 @@ Streamlit Community Cloud | Datathon 2025-2026
 import streamlit as st
 import pandas as pd
 import numpy as np
-import pickle
+import joblib
+import json
 import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -47,10 +48,8 @@ def load_model():
         scaler_path = os.path.join(base, scaler_file)
         if not os.path.exists(model_path):
             continue
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
-        with open(scaler_path, 'rb') as f:
-            scaler = pickle.load(f)
+        model  = joblib.load(model_path)
+        scaler = joblib.load(scaler_path)
         meta = {}
         if meta_file:
             mp = os.path.join(base, meta_file)
@@ -58,8 +57,7 @@ def load_model():
                 with open(mp, 'r', encoding='utf-8') as f:
                     meta = json.load(f)
             elif mp.endswith('.pkl') and os.path.exists(mp):
-                with open(mp, 'rb') as f:
-                    meta = pickle.load(f)
+                meta = joblib.load(mp)
         return model, scaler, meta
     return None, None, {}
 

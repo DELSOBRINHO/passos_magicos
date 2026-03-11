@@ -33,8 +33,6 @@ app/modelo_risco.pkl
 # CSV na raiz (duplicado — usar apenas data/)
 BASE DE DADOS PEDE 2024 - DATATHON - PEDE2022.csv
 
-# Figuras geradas (regenerar com notebook)
-data/fig_*.png
 
 # Sistema
 .DS_Store

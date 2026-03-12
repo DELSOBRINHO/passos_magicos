@@ -58,3 +58,6 @@ logs/
 # Streamlit cache
 .streamlit/secrets.toml
 
+# Temporários locais do agente
+.augment_tmp_*
+

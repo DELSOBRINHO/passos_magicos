@@ -1,0 +1,25 @@
+  
+  
+ 
+
+
+IAN  (Indicador  de  Adequação  de  Nível)   Fórmula:  D  =  Fase  Efetiva  -  Fase  Ideal   Dados  necessários:  -  Fase  atual  do  estudante  na  Associação  -  Fase  ideal  conforme  a  idade   
+  -  Fase  ideal:  7  ano  -  Fase  efetiva:  5  ano  -  Exemplo:   -  D  =  5  -  7  =  -2  -  Resultado:   -  Moderada  =  5  pontos   IDA  (Indicador  de  Desempenho  Acadêmico)   Fórmula:  IDA  =  (Nota  Matemática  +  Nota  Português  +  Nota  Inglês)  /  3   Dados  necessários:  -  Notas  (internas  da  associação)   IEG  (Indicador  de  Engajamento)   Fórmula:  IEG  =  Soma  das  pontuações  das  tarefas  realizadas  e  registradas  /  Número  de  
+tarefas
+  Exemplos:  -  Participação  em  tarefas  de  casa;  Atividades  acadêmicas;  Voluntariado;   IAA  (Indicador  de  Autoavaliação)   Fórmula:  IAA  =  Soma  das  pontuações  das  respostas  do  estudante  /  Número  total  de  
+perguntas
+  PS:  Perguntas  avaliadas  de  0  a  10  
+
+
+ 
+  IPS  (Indicador  Psicossocial)   Fórmula:  IPS  =  Soma  das  pontuações  dos  avaliadores  /  Número  de  avaliadores   PS:  Avaliações  feitas  por  psicólogos  (comportamental,  emocional,  social)   IPP  (Indicador  Psicopedagógico)   Fórmula:  IPP  =  Soma  das  avaliações  sobre  aspectos  pedagógicos   /  Número  de  avaliações   IPV  (Indicador  do  Ponto  de  Virada)   Fórmula:  IPV  =  Análises  longitudinais  de  progresso  acadêmico,  engajamento  e  
+desenvolvimento
+ 
+emocional
+   
+
+
+ INDE  
+ 
+ 
+ 

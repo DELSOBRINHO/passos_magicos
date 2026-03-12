@@ -1,363 +1,170 @@
-# 📋 Plano de Desenvolvimento – Datathon Passos Mágicos
-## Repositório: https://github.com/DELSOBRINHO/passos_magicos
-## Prazo final: **22/03/2026** | Fase 5 – Deep Learning & NLP
+# 📋 Plano de Desenvolvimento — Alinhado ao Plano Mestre
 
----
+> Documento operacional do repositório. A referência estratégica continua sendo `documentation/PLANO_MESTRE.md`, que permanece inalterado.
 
-> **Como usar este documento:**
-> A cada iteração de trabalho, o agente deve:
-> 1. Ler este arquivo **primeiro** para entender o estado atual
-> 2. Marcar tarefas concluídas trocando `[ ]` por `[x]`
-> 3. Adicionar data de conclusão ao lado da tarefa
-> 4. Jamais retrabalhar itens já marcados `[x]`
-> 5. Salvar o arquivo atualizado ao final da sessão
+## 1. Objetivo
 
----
+Este documento traduz o `PLANO_MESTRE.md` para o **estado real atual do projeto**, deixando explícito:
 
-## 🗂️ ESTRUTURA DE ARQUIVOS ESPERADA
+- o que já está implementado;
+- o que está operacional no app atual;
+- o que segue como evolução futura.
 
-```
+## 2. Princípios de alinhamento
+
+1. `PLANO_MESTRE.md` é o documento autoritativo de direção.
+2. A documentação operacional deve refletir o repositório como ele existe hoje.
+3. Direção conceitual e implementação corrente não devem ser confundidas.
+4. Toda atualização documental deve permanecer coerente com `app/`, `tests/` e `streamlit_app.py`.
+
+## 3. Estado atual do projeto
+
+### 3.1 Implementado
+
+- aplicação Streamlit com páginas de **Predição Individual**, **Análise da Turma** e **Sobre o Projeto**;
+- cálculo de **INDE dinâmico por fase**;
+- consolidação em três dimensões:
+  - `dim_academica`
+  - `dim_psicossocial`
+  - `dim_psicopedagogica`
+- extração de sinais textuais das observações:
+  - `sent_score`
+  - `sent_len`
+- predição com **probabilidade calibrada**;
+- fallback heurístico para contingência quando o artefato do modelo não fica utilizável;
+- deploy preparado via `streamlit_app.py`.
+
+### 3.2 Operacional no app
+
+- formulário individual com `IAN`, `IDA`, `IEG`, `IAA`, `IPS`, `IPP`, `IPV`, `Fase`, pedras, número de avaliações e observação;
+- upload em lote com derivação automática de dimensões e INDE;
+- classificação em risco **baixo**, **médio** e **alto**;
+- recomendações e leitura visual do risco;
+- uso do threshold vindo do metadado do modelo.
+
+### 3.3 Em evolução
+
+- aprofundar a leitura longitudinal prevista no plano mestre;
+- expandir NLP para representações textuais mais ricas, se validado;
+- evoluir a frente preditiva sem romper a interface gerencial atual;
+- consolidar materiais finais de apresentação e vídeo.
+
+## 4. Estrutura corrente do repositório
+
+```text
 passos_magicos/
-├── documentation/
-│   └── PLANO_DESENVOLVIMENTO.md   ← este arquivo
-├── data/
-│   └── BASE DE DADOS PEDE 2024 - DATATHON - PEDE2022.csv
-├── notebooks/
-│   ├── 01_analise_exploratoria.ipynb
-│   ├── 02_modelo_preditivo.ipynb
-│   ├── gerar_notebooks.py
-│   └── build_model_nb.py
 ├── app/
 │   ├── app.py
-│   ├── modelo_risco.h5   (gerado pelo notebook 02)
-│   ├── scaler.pkl        (gerado pelo notebook 02)
-│   └── modelo_meta.pkl   (gerado pelo notebook 02)
-├── .streamlit/
-│   └── config.toml
-├── .gitignore
+│   ├── risk_calibration.py
+│   ├── ui_helpers.py
+│   ├── modelo_risco_clean.pkl
+│   ├── scaler_clean.pkl
+│   └── modelo_meta_clean.json
+├── data/
+├── documentation/
+│   ├── PLANO_MESTRE.md
+│   ├── PLANO_DESENVOLVIMENTO.md
+│   └── INDICE_DATATHON.md
+├── notebooks/
+├── tests/
+├── streamlit_app.py
 ├── requirements.txt
-└── README.md
+└── requirements-dev.txt
 ```
 
----
-
-## 📦 FASE 0 – INFRAESTRUTURA E REPOSITÓRIO
-
-### 0.1 Estrutura local
-- [x] Criar pasta `/data` — 2026-03-02
-- [x] Criar pasta `/notebooks` — 2026-03-02
-- [x] Criar pasta `/app` — 2026-03-02
-- [x] Criar pasta `/documentation` — 2026-03-02
-- [x] Copiar CSV para `/data` — 2026-03-02
-- [x] Criar `.gitignore` (ignorar `__pycache__`, `.h5`, `.pkl`, dados grandes) — 2026-03-02
-
-### 0.4 Devcontainer (VS Code)
-- [x] Criar `.devcontainer/Dockerfile` (Python 3.10-bullseye) — 2026-03-02
-- [x] Criar `.devcontainer/devcontainer.json` (extensions, portas 8501+8888, postCreateCommand) — 2026-03-02
-- [x] Verificar que `.devcontainer/` está rastreado no git (não ignorado) — 2026-03-02
-- [x] Corrigir erro `exit code 100` no apt-get: usar imagem direta sem Dockerfile customizado — 2026-03-02
-- [x] Corrigir avisos de schema: mover settings de formatação para `.vscode/settings.json` — 2026-03-02
-- [ ] **PENDENTE**: Docker engine instável (pipe não disponível). Reiniciar Docker Desktop completamente e tentar novamente `Dev Containers: Reopen in Container`.
-
-### 0.2 Repositório GitHub
-- [x] Fazer o primeiro `git push` com a estrutura base — 2026-03-02
-- [x] Verificar que todos os arquivos estão no GitHub: https://github.com/DELSOBRINHO/passos_magicos — 2026-03-02
-- [x] Confirmar branch `main` como padrão — 2026-03-02
-
-### 0.3 Dependências
-- [x] Instalar: `pandas, numpy, matplotlib, scipy, scikit-learn` — pré-existentes
-- [x] Instalar: `seaborn` — 2026-03-02
-- [x] Instalar: `nbformat, notebook` — 2026-03-02
-- [x] Instalar: `streamlit` — 2026-03-02
-- [x] Instalar: `tensorflow` (necessário para treinar modelo MLP completo) — 2026-03-03
-- [x] Separar `requirements.txt` (Streamlit Cloud, usa `tensorflow-cpu`) de `requirements-dev.txt` (dev completo) — 2026-03-02
-- [x] Verificar `requirements.txt` cobrindo todas as dependências do Streamlit Cloud — 2026-03-02
-
----
-
-## 📊 FASE 1 – ANÁLISE EXPLORATÓRIA (Notebook 01)
-
-**Arquivo:** `notebooks/01_analise_exploratoria.ipynb`
-**Gerado por:** `notebooks/gerar_notebooks.py`
-
-### 1.0 Base de Dados
-- [x] Identificar encoding correto (`utf-8-sig`, sep=`,`) — 2026-03-02
-- [x] Confirmar shape: **860 alunos × 42 colunas** — 2026-03-02
-- [x] Mapear colunas numéricas com vírgula como decimal — 2026-03-02
-- [x] Criar `Pedra_XX_num` (ordinal: Quartzo=1, Ágata=2, Ametista=3, Topázio=4) — 2026-03-02
-- [x] Criar `Evolucao_Pedra` (Pedra_22 - Pedra_21) — 2026-03-02
-- [x] Criar `Nivel_Defasagem` (categórica: Sem/Leve/Moderada/Severa) — 2026-03-02
-- [x] Criar `IPP` proxy = (Cf + Ct) / 2 — 2026-03-02
-- [ ] **EXECUTAR** o notebook e verificar que todas as células rodam sem erro
-- [ ] Verificar que as figuras foram salvas em `/data/fig_P*.png`
-
-### 1.1 Pergunta 1 – IAN (Defasagem)
-- [x] Código criado: histograma IAN + pizza por nível de defasagem — 2026-03-02
-- [ ] Célula executada com sucesso e figura salva (`fig_P1_ian.png`)
-- [ ] Insight documentado na célula de conclusão
-
-### 1.2 Pergunta 2 – IDA (Desempenho Acadêmico)
-- [x] Código criado: IDA por Fase (barras+erro) e IDA por Pedra — 2026-03-02
-- [ ] Célula executada com sucesso e figura salva (`fig_P2_ida.png`)
-- [ ] Insight documentado
-
-### 1.3 Pergunta 3 – IEG (Engajamento)
-- [x] Código criado: scatter IEG×IDA e IEG×IPV com regressão linear — 2026-03-02
-- [ ] Correlações calculadas e impressas (r e p-value)
-- [ ] Figura salva (`fig_P3_ieg.png`)
-
-### 1.4 Pergunta 4 – IAA (Autoavaliação)
-- [x] Código criado: scatter IAA×IDA e IAA×IEG — 2026-03-02
-- [ ] Figura salva (`fig_P4_iaa.png`)
-
-### 1.5 Pergunta 5 – IPS (Aspectos Psicossociais)
-- [x] Código criado: IDA/IEG por quartil de IPS + mapa de calor de correlações — 2026-03-02
-- [ ] Figura salva (`fig_P5_ips.png`)
-- [ ] Mapa de calor inclui: IPS, IDA, IEG, IAA, IPV, INDE 22
-
-### 1.6 Pergunta 6 – IPP (Psicopedagógico vs IAN)
-- [x] Código criado: boxplot IPP por nível de defasagem + scatter IAN×IPP — 2026-03-02
-- [ ] Figura salva (`fig_P6_ipp.png`)
-- [ ] Correlação calculada e interpretada
-
-### 1.7 Pergunta 7 – IPV (Ponto de Virada)
-- [x] Código criado: barras horizontais de correlação com IPV — 2026-03-02
-- [ ] Figura salva (`fig_P7_ipv.png`)
-- [ ] Top 3 preditores do IPV identificados e documentados
-
-### 1.8 Pergunta 8 – Multidimensionalidade (Clusterização)
-- [x] Código criado: Elbow Method + K-Means K=4 + PCA 2D — 2026-03-02
-- [ ] Célula de perfil médio por cluster executada
-- [ ] Figura salva (`fig_P8_clusters.png`)
-- [ ] Nomes/descrições dos 4 perfis de alunos documentados na conclusão
-
-### 1.9 Pergunta 10 – Efetividade do Programa
-- [x] Código criado: INDE/IDA/IEG/IPS por Pedra (Quartzo→Topázio) — 2026-03-02
-- [ ] Figura salva (`fig_P10_efetividade.png`)
-- [ ] Progressão estatística confirmada ou refutada
-
-### 1.10 Pergunta 11 – Insights Criativos
-- [x] NLP: frequência de palavras nas recomendações dos avaliadores — 2026-03-02
-- [x] Indicados para bolsa vs INDE (teste-t) — 2026-03-02
-- [x] Gênero vs INDE — 2026-03-02
-- [ ] Figuras salvas (`fig_P11_nlp.png`, `fig_P11_genero.png`)
-- [ ] Adicionar análise de: tempo no programa (Ano ingresso → 2022) vs INDE
-- [ ] Adicionar análise de: tipo de escola (pública vs privada) vs indicadores
-
----
-
-## 🤖 FASE 2 – MODELO PREDITIVO (Notebook 02)
-
-**Arquivo:** `notebooks/02_modelo_preditivo.ipynb`
-**Gerado por:** `notebooks/build_model_nb.py`
-
-### 2.1 Feature Engineering
-- [x] Target `em_risco` criado (multicritério: Defas<0 OR INDE baixo OR IEG+IDA baixos) — 2026-03-02
-- [x] NLP: `sent_score` — análise de sentimento lexical nas recomendações — 2026-03-02
-- [x] Embedding ordinal de Pedra (`Pedra_22_num`) — 2026-03-02
-- [x] Feature `Evolucao_Pedra` — 2026-03-02
-- [x] **Data Leakage detectado e corrigido:** `ian_num` (correlação=0.983) removido — 2026-03-11
-- [x] Taxa de risco confirmada: 601/860 = 69.9% (Em Risco) — 2026-03-11
-
-### 2.2 Separação Treino/Teste
-- [x] Código criado: `train_test_split` com `stratify=y`, 80/20 — 2026-03-02
-- [x] `StandardScaler` fitado apenas no treino — 2026-03-02
-- [x] `scaler.pkl` salvo em `/app` — 2026-03-02
-- [ ] Verificar balanceamento no treino e no teste após split
-
-### 2.3 Arquitetura MLP
-- [x] Arquitetura definida: `Input(11)→Dense(128,ReLU)→BN→Dropout(0.3)→Dense(64)→BN→Dropout(0.3)→Dense(32)→Dropout(0.2)→Sigmoid` — 2026-03-02
-- [x] Callbacks: EarlyStopping (Recall), ReduceLROnPlateau — 2026-03-02
-- [x] Class weights para balancear classes — 2026-03-02
-- [x] Fallback `sklearn.MLPClassifier` quando TensorFlow ausente — 2026-03-02
-- [ ] **TREINAR** o modelo (requer TensorFlow instalado)
-- [ ] Curva de aprendizado gerada e salva (`fig_learning_curve.png`)
-
-### 2.4 Avaliação
-- [x] Código criado: Matriz de Confusão, Curva ROC, Curva Precisão-Recall — 2026-03-02
-- [x] Threshold ajustável (padrão: 0.35, favorecendo Recall) — 2026-03-02
-- [x] Importância de features por permutação — 2026-03-02
-- [ ] **EXECUTAR** avaliação e documentar métricas finais:
-  - ROC-AUC esperado: > 0.75
-  - Recall esperado: > 0.80 (prioridade: não perder alunos em risco)
-- [ ] Figura salva (`fig_model_eval.png`)
-- [ ] Figura salva (`fig_feature_importance.png`)
-
-### 2.5 Salvamento do Modelo
-- [x] Código criado para salvar `modelo_risco.h5` (TF) ou `.pkl` (sklearn) — 2026-03-02
-- [x] `modelo_meta.pkl` com features, threshold e ROC-AUC — 2026-03-02
-- [ ] Arquivos gerados e presentes em `/app/`
-- [ ] Verificar que o Streamlit carrega os arquivos corretamente
-
----
-
-## 🚀 FASE 3 – APLICAÇÃO STREAMLIT
-
-**Arquivo:** `app/app.py`
-
-### 3.1 Estrutura do App
-- [x] 3 páginas: Predição Individual | Análise da Turma | Sobre o Projeto — 2026-03-02
-- [x] Sidebar com navegação e tema visual (cores Passos Mágicos) — 2026-03-02
-- [x] CSS customizado para cards de risco (verde/amarelo/vermelho) — 2026-03-02
-
-### 3.2 Página 1 – Predição Individual
-- [x] Formulário com todos os 11 indicadores (sliders) — 2026-03-02
-- [x] Cálculo de probabilidade via modelo treinado — 2026-03-02
-- [x] Gauge chart visual (velocímetro) — 2026-03-02
-- [x] Nível de risco: Baixo / Médio / Alto com CSS diferenciado — 2026-03-02
-- [x] Recomendações automáticas por nível de risco — 2026-03-02
-- [x] Top 3 fatores de risco com barra de progresso — 2026-03-02
-- [x] Fallback heurístico quando modelo não está disponível — 2026-03-02
-- [ ] **TESTAR** com valores reais de alunos do dataset
-- [ ] Verificar que o gauge renderiza corretamente
-- [ ] Verificar recomendações para cada nível (Baixo/Médio/Alto)
-
-### 3.3 Página 2 – Análise da Turma
-- [x] Upload de CSV — 2026-03-02
-- [x] Predições em lote para toda a turma — 2026-03-02
-- [x] Resumo por nível de risco (cards de métricas) — 2026-03-02
-- [x] Tabela de alunos em Risco Alto — 2026-03-02
-- [x] Download do resultado com probabilidades (.csv) — 2026-03-02
-- [ ] **TESTAR** upload com o CSV original do datathon
-- [ ] Verificar mapeamento de colunas quando faltam features no upload
-
-### 3.4 Página 3 – Sobre o Projeto
-- [x] Descrição da Passos Mágicos — 2026-03-02
-- [x] Tabela de tecnologias — 2026-03-02
-- [x] Indicadores do modelo — 2026-03-02
-- [x] Métrica ROC-AUC dinâmica (lida do modelo) — 2026-03-02
-
-### 3.5 Configuração e Tema
-- [x] `.streamlit/config.toml` com cores da identidade visual — 2026-03-02
-- [ ] Adicionar logo/imagem da Passos Mágicos (se disponível)
-- [ ] Testar layout em tela pequena (responsividade)
-
----
-
-## ☁️ FASE 4 – DEPLOY (Streamlit Community Cloud)
-
-- [ ] Repositório GitHub com todos os arquivos commitados
-- [ ] Verificar que `requirements.txt` está correto para o Cloud
-  - Remover `pickle5` se Python ≥ 3.8
-  - Confirmar versões compatíveis com Streamlit Cloud
-- [ ] Acessar https://share.streamlit.io → New app
-- [ ] Configurar: repo=`DELSOBRINHO/passos_magicos`, file=`app/app.py`
-- [ ] Aguardar build e verificar logs de erro
-- [ ] Anotar URL pública da aplicação: `https://________.streamlit.app`
-- [ ] Testar app público no celular e no computador
-
----
-
-## 📊 FASE 5 – APRESENTAÇÃO (STORYTELLING)
-
-**Formato:** PPT ou PDF | Foco: impacto social, menos código, mais insights
-
-### Roteiro sugerido (slides)
-- [ ] Slide 1 – Capa: Missão Passos Mágicos + problema da defasagem
-- [ ] Slide 2 – Quem são os alunos? (perfil demográfico e distribuição por fase)
-- [ ] Slide 3 – P1: Perfil de defasagem (IAN) — quantos e quão graves
-- [ ] Slide 4 – P2+P3: Desempenho e Engajamento — tendências e correlações
-- [ ] Slide 5 – P4+P5: Autoavaliação e Psicossocial — o aluno sabe quem ele é?
-- [ ] Slide 6 – P6+P7: Psicopedagógico e Ponto de Virada — o que muda tudo
-- [ ] Slide 7 – P8: Os 4 Perfis de Alunos (Clusters) — quem são eles?
-- [ ] Slide 8 – P10: Efetividade — o programa funciona? Quartzo → Topázio
-- [ ] Slide 9 – P11: Insights extras (NLP + gênero + bolsas)
-- [ ] Slide 10 – P9: O Modelo Preditivo — como funciona e quão confiável é
-- [ ] Slide 11 – Demo: A ferramenta Streamlit em ação
-- [ ] Slide 12 – Recomendações práticas para a Associação
-- [ ] Slide 13 – Conclusão e próximos passos
-
----
-
-## 🎬 FASE 6 – VÍDEO (até 5 minutos)
-
-### Roteiro (conforme plano mestre)
-- [ ] Min 0:00–1:00 – Introdução à missão e o problema da defasagem
-- [ ] Min 1:00–2:00 – Insights principais da análise 2022 (gráficos do EDA)
-- [ ] Min 2:00–3:00 – Como o Modelo Preditivo identifica o risco
-- [ ] Min 3:00–4:00 – Demonstração ao vivo do Streamlit
-- [ ] Min 4:00–5:00 – Conclusão e recomendações práticas
-
-### Produção
-- [ ] Definir membros do grupo que aparecerão no vídeo
-- [ ] Preparar slides/tela para screencast
-- [ ] Gravar, editar e exportar (MP4)
-- [ ] Hospedar (YouTube/Drive) e anotar link
-
----
-
-## ✅ CHECKLIST FINAL DE ENTREGA
-
-| # | Entregável | Status | Link/Arquivo |
-|---|-----------|--------|-------------|
-| 1 | Link GitHub com código | ⏳ Pendente | https://github.com/DELSOBRINHO/passos_magicos |
-| 2 | Notebook EDA (limpeza + análise) | ⏳ Pendente execução | `notebooks/01_analise_exploratoria.ipynb` |
-| 3 | Notebook ML (modelo preditivo) | ⏳ Pendente execução | `notebooks/02_modelo_preditivo.ipynb` |
-| 4 | App Streamlit com deploy | ⏳ Pendente deploy | `app/app.py` |
-| 5 | Apresentação storytelling (PPT/PDF) | ❌ Não iniciado | — |
-| 6 | Vídeo até 5 minutos | ❌ Não iniciado | — |
-
-**Legenda:** ✅ Concluído | ⏳ Em andamento/pendente execução | ❌ Não iniciado
-
----
-
-## 🔧 DECISÕES TÉCNICAS REGISTRADAS
-
-> Decisões tomadas e justificadas — **não alterar sem discussão prévia**
-
-| Decisão | Justificativa |
-|---------|--------------|
-| Encoding `utf-8-sig`, sep=`,` | Único que parseia o CSV corretamente (testado) |
-| IPP = (Cf + Ct) / 2 | Não há coluna IPP direta; Cf=critério funcional, Ct=técnico |
-| Target `em_risco` multicritério | Mais robusto que critério único; prioriza sensibilidade |
-| Threshold 0.35 (vs 0.5 padrão) | Prioriza Recall — não perder alunos em risco |
-| K=4 clusters | Elbow method confirmou (validar após execução) |
-| Fallback sklearn MLP | TensorFlow não instalado localmente — fallback garante portabilidade |
-| Pedra ordinal 1-4 | Hierarquia natural: Quartzo < Ágata < Ametista < Topázio |
-| Figuras salvas em `/data/` | Evita conflito com arquivos do modelo em `/app/` |
-
----
-
-## 🚨 RESTRIÇÕES DE ESCOPO
-
-> Itens **fora do escopo** — não implementar sem aprovação explícita
-
-- ❌ Banco de dados externo (SQLite, PostgreSQL, etc.)
-- ❌ Autenticação de usuários no Streamlit
-- ❌ Modelos de Linguagem (GPT, LLM) — apenas NLP lexical simples
-- ❌ Dados de anos além de 2022 (o CSV cobre apenas 2022, com histórico de pedras 2020/2021)
-- ❌ Redes convolucionais ou LSTM (dados tabulares, não sequências longas)
-- ❌ Deploy em cloud própria (apenas Streamlit Community Cloud)
-- ❌ Criação de banco de dados com novos alunos pelo app
-
----
-
-## 📅 CRONOGRAMA
-
-| Semana | Período | Meta |
-|--------|---------|------|
-| Semana 1 | 02/03 – 08/03 | Estrutura + EDA completo executado + GitHub com push |
-| Semana 2 | 09/03 – 15/03 | Modelo treinado + Streamlit testado + Deploy online |
-| Semana 3 | 16/03 – 22/03 | Apresentação PPT + Vídeo + Revisão final |
-| **ENTREGA** | **22/03/2026** | Todos os 6 entregáveis completos |
-
----
-
-## 📝 LOG DE ITERAÇÕES
-
-| Data | Sessão | O que foi feito |
-|------|--------|----------------|
-| 2026-03-02 | Sessão 1 | Criação da estrutura completa: pastas, notebooks (.ipynb), app Streamlit, requirements.txt, README.md, .streamlit/config.toml |
-| 2026-03-02 | Sessão 1 | Instalação: seaborn, nbformat, notebook, streamlit |
-| 2026-03-02 | Sessão 1 | Exploração do dataset: 860×42, encoding confirmado, colunas mapeadas |
-| 2026-03-02 | Sessão 2 | Criação da pasta documentation e PLANO_DESENVOLVIMENTO.md |
-| 2026-03-02 | Sessão 2 | Criação do `.gitignore` |
-| 2026-03-02 | Sessão 2 | Separação requirements.txt (app/Cloud) e requirements-dev.txt (dev) |
-| 2026-03-02 | Sessão 2 | Criação do `.devcontainer/Dockerfile` e `devcontainer.json` |
-| 2026-03-02 | Sessão 2 | Primeiro commit e push → https://github.com/DELSOBRINHO/passos_magicos |
-| 2026-03-03 | Sessão 3 | Instalação: `tensorflow-cpu` no ambiente de desenvolvimento; atualização de `requirements-dev.txt` e commit. |
-| 2026-03-11 | Sessão 4 | Diagnóstico do Docker: pipe `dockerDesktopLinuxEngine` indisponível. Contexto voltou para `desktop-linux`. Dev container ainda não executado. Próxima ação: executar notebooks localmente sem container. |
-| 2026-03-11 | Sessão 5 | **Data Leakage corrigido:** `ian_num` (correlação=0.983) removido. Modelo limpo (22 features): AUC=0.996, Recall=1.0, threshold=0.35. Artefatos: `modelo_risco_clean.pkl`, `scaler_clean.pkl`, `modelo_meta_clean.json`. |
-| 2026-03-11 | Sessão 5 | **app.py corrigido:** `pickle.load()` → `joblib.load()` (resolve `_pickle.UnpicklingError`). Formulário e batch upload atualizados para 22 features sem IAN. App rodando em `localhost:8501`. |
-| 2026-03-11 | Sessão 5 | **INDICE_DATATHON.md criado:** mapeamento das 11 perguntas × matérias do curso × técnicas da solução. |
+## 5. Tradução dos eixos do plano mestre
 
+### Eixo 1 — Engenharia de dados e harmonização
+
+**Direção no plano mestre:** estruturar a leitura do PEDE e sustentar análises reaplicáveis.
+
+**Estado atual:**
+
+- notebooks e base tratada organizados no repositório;
+- figuras analíticas já disponíveis em `data/`;
+- cálculo do INDE dinâmico incorporado ao app.
+
+### Eixo 2 — NLP em dados não estruturados
+
+**Direção no plano mestre:** extrair valor das observações textuais.
+
+**Estado atual:**
+
+- pipeline lexical operacional no app;
+- uso de `sent_score` e `sent_len` como sinais complementares;
+- possibilidade de informar esses valores manualmente para simulação e revisão.
+
+### Eixo 3 — Predição de risco educacional
+
+**Direção no plano mestre:** usar IA como sentinela de risco.
+
+**Estado atual:**
+
+- modelo tabular serializado em `joblib` com features consolidadas;
+- calibração de probabilidade aplicada antes da exibição do resultado;
+- threshold lido de `modelo_meta_clean.json`;
+- no artefato clean atual, o threshold é **0.30**.
+
+**Nota de alinhamento:** o plano mestre enquadra essa frente dentro da trilha de Deep Learning; o estado operacional atual publicado utiliza um modelo probabilístico tabular calibrado, aderente ao código e aos artefatos presentes no repositório.
+
+### Eixo 4 — Solução tecnológica e deploy
+
+**Direção no plano mestre:** entregar ferramenta utilizável pela equipe.
+
+**Estado atual:**
+
+- `app/app.py` contém a implementação principal;
+- `streamlit_app.py` funciona como entrypoint para o Streamlit Community Cloud;
+- os fluxos individual e em lote estão alinhados com a lógica atual do projeto.
+
+### Eixo 5 — Storytelling “A Jornada da Pedra”
+
+**Direção no plano mestre:** transformar análise técnica em narrativa executiva.
+
+**Estado atual:**
+
+- perguntas do case já estão mapeadas documentalmente;
+- notebooks e figuras sustentam a narrativa;
+- apresentação final e vídeo ainda dependem de consolidação final.
+
+## 6. Backlog executivo
+
+### Concluído
+
+- estrutura principal do repositório;
+- app Streamlit funcional;
+- deploy com entrypoint na raiz;
+- calibração de probabilidade;
+- melhorias recentes de UX na predição individual;
+- testes automatizados para calibração e helpers de UI;
+- atualização de `README.md` e `datathon.md`.
+
+### Em andamento
+
+- alinhamento completo da documentação ao plano mestre;
+- revisão final do pacote executivo do Datathon.
+
+### Pendente
+
+- consolidar apresentação storytelling;
+- consolidar vídeo final;
+- revisar pacote final antes do fechamento.
+
+## 7. Validações recentes
+
+Verificações já executadas no estado atual do código:
+
+- `python -m py_compile app/app.py app/ui_helpers.py`
+- `python -m pytest tests/test_risk_calibration.py tests/test_ui_helpers.py`
+- `python -m pytest tests -q`
+
+Resultado mais recente conhecido:
+
+- **7 testes passando**.
+
+## 8. Regras para próximas atualizações
+
+- não editar `PLANO_MESTRE.md` ao atualizar a documentação operacional;
+- descrever sempre o estado real do repositório;
+- não tratar artefatos legados como padrão atual;
+- manter coerência entre documentação, interface do app e artefatos em `app/`.

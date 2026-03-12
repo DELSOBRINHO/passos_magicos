@@ -8,8 +8,37 @@ import numpy as np
 import joblib
 import json
 import os
+import unicodedata
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+from risk_calibration import apply_probability_calibration
+from ui_helpers import build_risk_progress_html, describe_risk, resolve_sentiment_values
+
+INDIVIDUAL_DEFAULT_FEATURES = [
+    'dim_academica', 'dim_psicossocial', 'dim_psicopedagogica',
+    'fase', 'pedra_22_num', 'pedra_21_num', 'evolucao_pedra',
+    'no_av', 'sent_score', 'sent_len'
+]
+
+INDICATOR_LABELS = {
+    'ian_num': 'IAN – Adequação de Nível',
+    'ida_num': 'IDA – Desempenho Acadêmico',
+    'ieg_num': 'IEG – Engajamento',
+    'iaa_num': 'IAA – Autoavaliação',
+    'ips_num': 'IPS – Psicossocial',
+    'ipp_num': 'IPP – Psicopedagógico',
+    'ipv_num': 'IPV – Ponto de Virada',
+}
+
+PALAVRAS_NEG = {
+    'melhorar', 'empenhar', 'dificuldade', 'atraso', 'deficit', 'atencao',
+    'problema', 'risco', 'alerta', 'comportamento', 'limitacao', 'preocupa',
+    'atenção', 'limitação', 'preocupação'
+}
+PALAVRAS_POS = {
+    'destaque', 'excelente', 'promovido', 'bolsa', 'lider', 'potencial',
+    'engajado', 'comprometido', 'aprovado', 'evolucao', 'crescimento',
+    'líder', 'evolução'
+}
 
 # ─── Configuração da página ───────────────────────────────────────────────────
 st.set_page_config(
@@ -28,14 +57,40 @@ st.markdown("""
     .risk-alto  {background:#FDECEA; border-left:6px solid #E8562A; padding:1rem; border-radius:6px}
     .risk-medio {background:#FFF8E1; border-left:6px solid #F4A259; padding:1rem; border-radius:6px}
     .risk-baixo {background:#E8F5E9; border-left:6px solid #4CAF9A; padding:1rem; border-radius:6px}
+    .risk-progress-track {width:100%; height:12px; background:rgba(26,58,92,0.10); border-radius:999px; overflow:hidden; margin:0 0 1rem 0}
+    .risk-progress-fill {height:100%; border-radius:999px; transition:width 0.3s ease}
     .metric-card{background:#F5F7FA; border-radius:10px; padding:1rem; text-align:center}
 </style>
 """, unsafe_allow_html=True)
 
 # ─── Carregar modelo ──────────────────────────────────────────────────────────
+def get_model_artifact_signature():
+    base = os.path.dirname(__file__)
+    candidates = [
+        ('modelo_risco_clean.pkl', 'scaler_clean.pkl', 'modelo_meta_clean.json'),
+        ('modelo_risco_refined.pkl', 'scaler.pkl', 'modelo_meta_refined.json'),
+        ('modelo_risco.pkl', 'scaler.pkl', None),
+    ]
+    signature = []
+    for model_file, scaler_file, meta_file in candidates:
+        for file_name in [model_file, scaler_file, meta_file]:
+            if not file_name:
+                continue
+            path = os.path.join(base, file_name)
+            exists = os.path.exists(path)
+            signature.append((
+                file_name,
+                exists,
+                os.path.getmtime(path) if exists else None,
+                os.path.getsize(path) if exists else None,
+            ))
+    return tuple(signature)
+
+
 @st.cache_resource
-def load_model():
+def load_model(artifact_signature):
     import json
+    _ = artifact_signature
     base = os.path.dirname(__file__)
     # Prioriza o modelo limpo (sem leakage); faz fallback para o refinado
     candidates = [
@@ -61,7 +116,276 @@ def load_model():
         return model, scaler, meta
     return None, None, {}
 
-model, scaler, meta = load_model()
+model, scaler, meta = load_model(get_model_artifact_signature())
+
+
+def normalize_text(value):
+    text = unicodedata.normalize('NFKD', str(value).strip().lower())
+    return ''.join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def to_num_series(series):
+    return pd.to_numeric(series.astype(str).str.replace(',', '.', regex=False), errors='coerce')
+
+
+def map_pedra_value(value):
+    return {
+        'quartzo': 1,
+        'agata': 2,
+        'ametista': 3,
+        'topazio': 4,
+    }.get(normalize_text(value), np.nan)
+
+
+def dynamic_inde_weights(fase):
+    fase_num = float(fase)
+    if fase_num >= 8:
+        return {
+            'ian_num': 0.00,
+            'ida_num': 0.40,
+            'ieg_num': 0.20,
+            'iaa_num': 0.00,
+            'ips_num': 0.20,
+            'ipp_num': 0.10,
+            'ipv_num': 0.10,
+        }
+    return {
+        'ian_num': 0.10,
+        'ida_num': 0.20,
+        'ieg_num': 0.20,
+        'iaa_num': 0.10,
+        'ips_num': 0.20,
+        'ipp_num': 0.10,
+        'ipv_num': 0.10,
+    }
+
+
+def compute_dimensions_and_inde(indicators, fase):
+    weights = dynamic_inde_weights(fase)
+    acad_den = weights['ian_num'] + weights['ida_num']
+    psic_den = weights['ieg_num'] + weights['iaa_num'] + weights['ips_num']
+    peda_den = weights['ipp_num'] + weights['ipv_num']
+
+    dim_academica = (
+        indicators['ian_num'] * weights['ian_num'] + indicators['ida_num'] * weights['ida_num']
+    ) / acad_den
+    dim_psicossocial = (
+        indicators['ieg_num'] * weights['ieg_num']
+        + indicators['iaa_num'] * weights['iaa_num']
+        + indicators['ips_num'] * weights['ips_num']
+    ) / psic_den
+    dim_psicopedagogica = (
+        indicators['ipp_num'] * weights['ipp_num'] + indicators['ipv_num'] * weights['ipv_num']
+    ) / peda_den
+    inde_calc = sum(indicators[key] * weight for key, weight in weights.items())
+
+    return {
+        'dim_academica': float(dim_academica),
+        'dim_psicossocial': float(dim_psicossocial),
+        'dim_psicopedagogica': float(dim_psicopedagogica),
+        'inde_calc': float(inde_calc),
+        'weights': weights,
+    }
+
+
+def reverse_rank_series(series, bounds=None):
+    numeric = to_num_series(series)
+    valid = numeric.dropna()
+    if valid.empty:
+        return pd.Series(np.nan, index=series.index, dtype=float)
+    if bounds:
+        lower = bounds.get('min')
+        upper = bounds.get('max')
+    else:
+        lower = float(valid.min())
+        upper = float(valid.max())
+    if lower is None or upper is None or pd.isna(lower) or pd.isna(upper) or upper == lower:
+        return pd.Series(np.nan, index=series.index, dtype=float)
+    score = 10 * (1 - (numeric - lower) / (upper - lower))
+    return score.clip(0, 10).astype(float)
+
+
+def score_sentimento(texto):
+    if pd.isna(texto):
+        return 0
+    content = str(texto).lower()
+    return sum(1 for word in PALAVRAS_POS if word in content) - sum(1 for word in PALAVRAS_NEG if word in content)
+
+
+def heuristic_individual_prob(form_values):
+    feature_values = build_feature_values(form_values)
+    inde_gap = meta.get('inde_threshold', 6.5) - feature_values['inde_calc'] if meta else 6.5 - feature_values['inde_calc']
+    prob = 1 / (1 + np.exp(-1.2 * inde_gap))
+    prob += 0.04 * max(0.0, feature_values['pedra_21_num'] - feature_values['pedra_22_num'])
+    prob += 0.02 * max(0.0, -feature_values['sent_score'])
+    return float(np.clip(prob, 0, 1))
+
+
+def build_feature_values(form_values):
+    indicators = {key: float(form_values[key]) for key in INDICATOR_LABELS}
+    fase = float(form_values['fase'])
+    scores = compute_dimensions_and_inde(indicators, fase)
+    pedra_22 = float(form_values['pedra_22_num'])
+    pedra_21 = float(form_values['pedra_21_num'])
+    return {
+        **indicators,
+        'fase': fase,
+        'pedra_22_num': pedra_22,
+        'pedra_21_num': pedra_21,
+        'evolucao_pedra': pedra_22 - pedra_21,
+        'no_av': float(form_values['no_av']),
+        'sent_score': float(form_values['sent_score']),
+        'sent_len': float(form_values['sent_len']),
+        **scores,
+    }
+
+
+def build_feature_vector(feature_values, meta_obj):
+    feature_names = meta_obj.get('features', INDIVIDUAL_DEFAULT_FEATURES)
+    medians = meta_obj.get('imputer_medians', {})
+    values = []
+    for feature in feature_names:
+        value = feature_values.get(feature, medians.get(feature, 0.0))
+        if pd.isna(value):
+            value = medians.get(feature, 0.0)
+        values.append(float(value))
+    return pd.DataFrame([values], columns=feature_names, dtype=float)
+
+
+def predict_individual_with_model(form_values, model_obj, scaler_obj, meta_obj):
+    feature_values = build_feature_values(form_values)
+    entrada = build_feature_vector(feature_values, meta_obj)
+    if model_obj is None or scaler_obj is None:
+        return None
+    if not hasattr(model_obj, 'predict_proba'):
+        return None
+    try:
+        entrada_sc = scaler_obj.transform(entrada)
+        proba = model_obj.predict_proba(entrada_sc)
+    except Exception:
+        return None
+    if getattr(proba, 'shape', (0, 0))[1] < 2:
+        return None
+    return float(proba[0][1])
+
+
+def model_is_usable(model_obj, scaler_obj, meta_obj):
+    strong_profile = {
+        'fase': 5, 'no_av': 4, 'pedra_22_num': 4, 'pedra_21_num': 3,
+        'sent_score': 2, 'sent_len': 200,
+        'ian_num': 8.5, 'ida_num': 9.0, 'ieg_num': 9.0, 'iaa_num': 8.5,
+        'ips_num': 8.5, 'ipp_num': 8.5, 'ipv_num': 9.0,
+    }
+    critical_profile = {
+        'fase': 5, 'no_av': 2, 'pedra_22_num': 1, 'pedra_21_num': 3,
+        'sent_score': -2, 'sent_len': 80,
+        'ian_num': 2.5, 'ida_num': 2.0, 'ieg_num': 2.5, 'iaa_num': 3.0,
+        'ips_num': 3.0, 'ipp_num': 2.5, 'ipv_num': 2.0,
+    }
+    try:
+        strong_prob = predict_individual_with_model(strong_profile, model_obj, scaler_obj, meta_obj)
+        critical_prob = predict_individual_with_model(critical_profile, model_obj, scaler_obj, meta_obj)
+    except Exception:
+        return False
+    if strong_prob is None or critical_prob is None:
+        return False
+    return critical_prob > strong_prob and (critical_prob - strong_prob) >= 0.10
+
+
+def get_matching_column(df, *aliases):
+    normalized = {normalize_text(col): col for col in df.columns}
+    for alias in aliases:
+        match = normalized.get(normalize_text(alias))
+        if match:
+            return match
+    return None
+
+
+def get_numeric_column(df, *aliases):
+    col = get_matching_column(df, *aliases)
+    if col is None:
+        return pd.Series(np.nan, index=df.index, dtype=float)
+    return to_num_series(df[col])
+
+
+def get_pedra_column(df, *aliases):
+    col = get_matching_column(df, *aliases)
+    if col is None:
+        return pd.Series(np.nan, index=df.index, dtype=float)
+    return df[col].apply(map_pedra_value).astype(float)
+
+
+def prepare_batch_features(raw_df, meta_obj):
+    prepared = raw_df.copy()
+    prepared['fase'] = get_numeric_column(raw_df, 'fase')
+
+    for indicator in ['ian_num', 'ida_num', 'ieg_num', 'iaa_num', 'ips_num', 'ipv_num']:
+        prepared[indicator] = get_numeric_column(raw_df, indicator, indicator.replace('_num', ''))
+
+    prepared['ipp_num'] = get_numeric_column(raw_df, 'ipp_num', 'ipp')
+    if prepared['ipp_num'].isna().all():
+        bounds = (meta_obj or {}).get('ipp_proxy_bounds', {})
+        cf_proxy = reverse_rank_series(get_numeric_column(raw_df, 'cf', 'Cf'), bounds.get('cf'))
+        ct_proxy = reverse_rank_series(get_numeric_column(raw_df, 'ct', 'Ct'), bounds.get('ct'))
+        prepared['ipp_num'] = pd.concat([cf_proxy, ct_proxy], axis=1).mean(axis=1)
+
+    prepared['pedra_22_num'] = get_numeric_column(raw_df, 'pedra_22_num')
+    if prepared['pedra_22_num'].isna().all():
+        prepared['pedra_22_num'] = get_pedra_column(raw_df, 'Pedra 22')
+
+    prepared['pedra_21_num'] = get_numeric_column(raw_df, 'pedra_21_num')
+    if prepared['pedra_21_num'].isna().all():
+        prepared['pedra_21_num'] = get_pedra_column(raw_df, 'Pedra 21')
+
+    prepared['no_av'] = get_numeric_column(raw_df, 'no_av', 'Nº Av', 'N° Av', 'N Av')
+    prepared['sent_score'] = get_numeric_column(raw_df, 'sent_score')
+    prepared['sent_len'] = get_numeric_column(raw_df, 'sent_len')
+
+    text_cols = [
+        col for col in raw_df.columns
+        if any(tag in normalize_text(col) for tag in ['rec av', 'rec ps', 'destaque'])
+    ]
+    if prepared['sent_score'].isna().all() and text_cols:
+        prepared['sent_score'] = sum(raw_df[col].apply(score_sentimento) for col in text_cols)
+    if prepared['sent_len'].isna().all() and text_cols:
+        prepared['sent_len'] = sum(raw_df[col].apply(lambda x: len(str(x)) if not pd.isna(x) else 0) for col in text_cols)
+
+    prepared['evolucao_pedra'] = prepared['pedra_22_num'] - prepared['pedra_21_num']
+
+    fase_8 = prepared['fase'].fillna(0) >= 8
+    w_ian = np.where(fase_8, 0.00, 0.10)
+    w_ida = np.where(fase_8, 0.40, 0.20)
+    w_ieg = np.full(len(prepared), 0.20)
+    w_iaa = np.where(fase_8, 0.00, 0.10)
+    w_ips = np.full(len(prepared), 0.20)
+    w_ipp = np.full(len(prepared), 0.10)
+    w_ipv = np.full(len(prepared), 0.10)
+
+    prepared['dim_academica'] = (prepared['ian_num'] * w_ian + prepared['ida_num'] * w_ida) / (w_ian + w_ida)
+    prepared['dim_psicossocial'] = (
+        prepared['ieg_num'] * w_ieg + prepared['iaa_num'] * w_iaa + prepared['ips_num'] * w_ips
+    ) / (w_ieg + w_iaa + w_ips)
+    prepared['dim_psicopedagogica'] = (prepared['ipp_num'] * w_ipp + prepared['ipv_num'] * w_ipv) / (w_ipp + w_ipv)
+    prepared['inde_calc'] = (
+        prepared['ian_num'] * w_ian
+        + prepared['ida_num'] * w_ida
+        + prepared['ieg_num'] * w_ieg
+        + prepared['iaa_num'] * w_iaa
+        + prepared['ips_num'] * w_ips
+        + prepared['ipp_num'] * w_ipp
+        + prepared['ipv_num'] * w_ipv
+    )
+
+    feature_names = meta_obj.get('features', INDIVIDUAL_DEFAULT_FEATURES)
+    medians = meta_obj.get('imputer_medians', {}) if meta_obj else {}
+    X = pd.DataFrame(index=prepared.index)
+    for feature in feature_names:
+        series = pd.to_numeric(prepared.get(feature, pd.Series(np.nan, index=prepared.index)), errors='coerce')
+        fill_value = medians.get(feature)
+        if fill_value is None or pd.isna(fill_value):
+            fill_value = float(series.median()) if series.notna().any() else 0.0
+        X[feature] = series.fillna(fill_value)
+    return prepared, X
 
 # ─── Header ──────────────────────────────────────────────────────────────────
 col_logo, col_title = st.columns([1, 6])
@@ -92,83 +416,151 @@ st.sidebar.markdown("**Datathon 2025-2026**  \nFase 5 – Deep Learning & NLP")
 # ══════════════════════════════════════════════════════════════════════════════
 if pagina == "🔮 Predição Individual":
     st.header("🔮 Predição de Risco Individual")
-    st.markdown("Insira os indicadores atuais do aluno para calcular a probabilidade de entrar em risco de defasagem.")
+    st.markdown(
+        "Insira os 7 indicadores do INDE e os dados mínimos de contexto para calcular o "
+        "**INDE dinâmico por fase** e a **probabilidade de risco**."
+    )
 
-    # Features do modelo limpo (22 features, sem ian_num)
-    FEATURES = meta.get('features', [
-        'fase','ano_nasc','idade_22','ano_ingresso','cf','ct','no_av',
-        'pedra_22_num','ipp','pedra_21_num','evolucao_pedra','sent_len','sent_score',
-        'cg_num','iaa_num','ieg_num','ips_num','ida_num',
-        'matem_num','portug_num','ingles_num','ipv_num'
-    ])
-    pedra_map = {'Quartzo':1,'Ágata':2,'Ametista':3,'Topázio':4}
+    model_usable = model_is_usable(model, scaler, meta)
+    pedra_map = {'Quartzo': 1, 'Ágata': 2, 'Ametista': 3, 'Topázio': 4}
+    result_state_key = 'individual_last_inputs'
 
-    with st.form("form_predicao"):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("**📚 Indicadores Acadêmicos**")
-            ida_num   = st.slider("IDA – Desempenho Acadêmico", 0.0, 10.0, 5.5, 0.1)
-            matem_num = st.slider("Matemática", 0.0, 10.0, 5.0, 0.1)
-            portug_num= st.slider("Português",  0.0, 10.0, 5.0, 0.1)
-            ingles_num= st.slider("Inglês",     0.0, 10.0, 5.0, 0.1)
-        with c2:
-            st.markdown("**🧠 Indicadores Comportamentais**")
-            ieg_num = st.slider("IEG – Engajamento",           0.0, 10.0, 6.0, 0.1)
-            iaa_num = st.slider("IAA – Autoavaliação",         0.0, 10.0, 7.0, 0.1)
-            ips_num = st.slider("IPS – Aspectos Psicossociais",0.0, 10.0, 6.0, 0.1)
-            ipv_num = st.slider("IPV – Ponto de Virada",       0.0, 10.0, 6.5, 0.1)
-        with c3:
-            st.markdown("**📋 Indicadores de Nível e Conceito**")
-            cf     = st.slider("Cf – Conceito Final",   0.0, 10.0, 5.0, 0.5)
-            ct     = st.slider("Ct – Conceito Total",   0.0, 10.0, 5.0, 0.5)
-            cg_num = st.slider("Cg – Conceito Global",  0.0, 10.0, 5.0, 0.5)
-            no_av  = st.slider("Nº de Avaliações",      1,   4,    3)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("**📚 Dimensão Acadêmica**")
+        ian_num = st.slider("IAN – Adequação de Nível", 0.0, 10.0, 6.0, 0.1)
+        ida_num = st.slider("IDA – Desempenho Acadêmico", 0.0, 10.0, 6.0, 0.1)
+    with c2:
+        st.markdown("**🧠 Dimensão Psicossocial**")
+        ieg_num = st.slider("IEG – Engajamento", 0.0, 10.0, 6.0, 0.1)
+        iaa_num = st.slider("IAA – Autoavaliação", 0.0, 10.0, 6.5, 0.1)
+        ips_num = st.slider("IPS – Psicossocial", 0.0, 10.0, 6.0, 0.1)
+    with c3:
+        st.markdown("**📋 Dimensão Psicopedagógica**")
+        ipp_num = st.slider("IPP – Psicopedagógico", 0.0, 10.0, 6.0, 0.1)
+        ipv_num = st.slider("IPV – Ponto de Virada", 0.0, 10.0, 6.5, 0.1)
+        no_av = st.slider("Nº de Avaliações", 1, 6, 3)
 
-        c4, c5 = st.columns(2)
-        with c4:
-            pedra_atual = st.selectbox("🪨 Pedra Atual (2022)",    ['Quartzo','Ágata','Ametista','Topázio'])
-            pedra_ant   = st.selectbox("🪨 Pedra Anterior (2021)", ['Quartzo','Ágata','Ametista','Topázio'])
-            fase        = st.slider("Fase (1-8)", 1, 8, 5)
-        with c5:
-            ano_nasc     = st.number_input("Ano de Nascimento", 2000, 2020, 2010, 1)
-            ano_ingresso = st.number_input("Ano de Ingresso",   2014, 2022, 2018, 1)
-            sent_score   = st.slider("💬 Score de Sentimento dos Avaliadores", -5, 5, 0)
-            sent_len     = st.slider("💬 Comprimento do Texto de Avaliação",    0, 500, 150, 10)
-
-        submitted = st.form_submit_button("🔍 Calcular Risco", use_container_width=True, type="primary")
-
-    if submitted:
-        p22      = pedra_map[pedra_atual]
-        p21      = pedra_map[pedra_ant]
-        evolucao = p22 - p21
-        ipp      = (cf + ct) / 2
-        idade_22 = 2022 - ano_nasc
-
-        # Montar vetor de entrada na ordem exata das features do modelo
-        feature_vals = {
-            'fase': fase, 'ano_nasc': ano_nasc, 'idade_22': idade_22,
-            'ano_ingresso': ano_ingresso, 'cf': cf, 'ct': ct, 'no_av': no_av,
-            'pedra_22_num': p22, 'ipp': ipp, 'pedra_21_num': p21,
-            'evolucao_pedra': evolucao, 'sent_len': sent_len, 'sent_score': sent_score,
-            'cg_num': cg_num, 'iaa_num': iaa_num, 'ieg_num': ieg_num,
-            'ips_num': ips_num, 'ida_num': ida_num, 'matem_num': matem_num,
-            'portug_num': portug_num, 'ingles_num': ingles_num, 'ipv_num': ipv_num,
-        }
-        entrada = np.array([[feature_vals.get(f, 0.0) for f in FEATURES]])
-
-        if model is not None and scaler is not None:
-            entrada_sc = scaler.transform(entrada)
-            prob = float(model.predict_proba(entrada_sc)[0][1])
+    c4, c5 = st.columns(2)
+    with c4:
+        fase = st.slider("Fase do Aluno (0-8)", 0, 8, 5)
+        pedra_atual = st.selectbox("🪨 Pedra Atual (2022)", ['Quartzo', 'Ágata', 'Ametista', 'Topázio'])
+        pedra_ant = st.selectbox("🪨 Pedra Anterior (2021)", ['Quartzo', 'Ágata', 'Ametista', 'Topázio'])
+    with c5:
+        st.markdown("**💬 Texto e Ajustes de Avaliação**")
+        observacoes = st.text_area(
+            "💬 Observações dos avaliadores (opcional)",
+            placeholder="Ex.: aluno engajado, com boa evolução e participação constante."
+        )
+        usar_sentimento_manual = st.checkbox(
+            "Informar manualmente score e comprimento do texto",
+            value=False,
+            help="Útil para simular cenários, revisar a heurística automática ou informar valores quando não houver texto confiável."
+        )
+        if usar_sentimento_manual:
+            sent_score_manual = st.slider("💬 Score de Sentimento dos Avaliadores", -5, 5, 0)
+            sent_len_manual = st.slider("💬 Comprimento do Texto de Avaliação", 0, 500, 150, 10)
         else:
-            # Fallback heurístico quando modelo ainda não foi treinado
-            score = (10 - ida_num)*0.25 + (10 - ieg_num)*0.25 + (10 - ipp)*0.2 + (10 - ips_num)*0.15 + (10 - cg_num)*0.15
-            prob = min(max(score / 10, 0), 1)
+            sent_score_manual = None
+            sent_len_manual = None
+
+        sentiment_values = resolve_sentiment_values(
+            observacoes,
+            score_sentimento,
+            usar_manual=usar_sentimento_manual,
+            sent_score_manual=sent_score_manual,
+            sent_len_manual=sent_len_manual,
+        )
+        if sentiment_values['mode'] == 'manual':
+            st.caption(
+                f"{sentiment_values['preview']} · Use este modo apenas quando quiser simular ou corrigir manualmente esses sinais."
+            )
+        else:
+            st.caption(f"{sentiment_values['preview']} · Os valores acima são derivados automaticamente das observações.")
+
+    current_inputs = {
+        'fase': fase,
+        'ian_num': ian_num,
+        'ida_num': ida_num,
+        'ieg_num': ieg_num,
+        'iaa_num': iaa_num,
+        'ips_num': ips_num,
+        'ipp_num': ipp_num,
+        'ipv_num': ipv_num,
+        'no_av': no_av,
+        'pedra_22_num': pedra_map[pedra_atual],
+        'pedra_21_num': pedra_map[pedra_ant],
+        'sent_score': sentiment_values['sent_score'],
+        'sent_len': sentiment_values['sent_len'],
+    }
+
+    submitted = st.button("🔍 Calcular Risco", use_container_width=True, type="primary")
+    if submitted:
+        st.session_state[result_state_key] = dict(current_inputs)
+
+    last_inputs = st.session_state.get(result_state_key)
+    is_current_result = bool(last_inputs) and last_inputs == current_inputs
+    if last_inputs and not is_current_result:
+        st.info("Os parâmetros foram alterados desde o último cálculo. Clique em **Calcular Risco** para atualizar o resultado.")
+
+    if is_current_result:
+        sent_score = sentiment_values['sent_score']
+        sent_len = sentiment_values['sent_len']
+        feature_vals = {
+            'fase': fase,
+            'ian_num': ian_num,
+            'ida_num': ida_num,
+            'ieg_num': ieg_num,
+            'iaa_num': iaa_num,
+            'ips_num': ips_num,
+            'ipp_num': ipp_num,
+            'ipv_num': ipv_num,
+            'no_av': no_av,
+            'pedra_22_num': pedra_map[pedra_atual],
+            'pedra_21_num': pedra_map[pedra_ant],
+            'sent_score': sent_score,
+            'sent_len': sent_len,
+        }
+
+        feature_values = build_feature_values(feature_vals)
+        raw_prob = None
+        if model_usable:
+            raw_prob = predict_individual_with_model(feature_vals, model, scaler, meta)
+
+        if raw_prob is not None:
+            prob = apply_probability_calibration(raw_prob, meta)
+        else:
+            prob = heuristic_individual_prob(feature_vals)
 
         pct = prob * 100
         threshold = meta.get('threshold', 0.35) if meta else 0.35
 
         st.markdown("---")
         st.subheader("📊 Resultado da Análise")
+
+        if model_usable:
+            st.success(
+                "Modelo alinhado ao plano mestre carregado com sucesso. "
+                "A predição foi feita sem contingência e com calibração para reduzir saturação no topo."
+            )
+        else:
+            st.info(
+                "Predição individual em modo de contingência: o modelo não ficou utilizável nesta execução, "
+                "então o app aplicou a regra heurística como proteção."
+            )
+
+        dim1, dim2, dim3, dim4 = st.columns(4)
+        dim1.metric("INDE calculado", f"{feature_values['inde_calc']:.2f}")
+        dim2.metric("Dim. Acadêmica", f"{feature_values['dim_academica']:.2f}")
+        dim3.metric("Dim. Psicossocial", f"{feature_values['dim_psicossocial']:.2f}")
+        dim4.metric("Dim. Psicopedagógica", f"{feature_values['dim_psicopedagogica']:.2f}")
+
+        pesos = feature_values['weights']
+        pesos_fmt = ' · '.join(
+            f"{sigla.replace('_num', '').upper()}: {peso * 100:.0f}%"
+            for sigla, peso in pesos.items() if peso > 0
+        )
+        st.caption(f"Pesos aplicados para a fase {fase}: {pesos_fmt}")
 
         col_gauge, col_info = st.columns([1, 2])
         with col_gauge:
@@ -186,52 +578,20 @@ if pagina == "🔮 Predição Individual":
             st.pyplot(fig)
 
         with col_info:
-            if prob >= 0.65:
-                nivel = "ALTO"
-                css = "risk-alto"
-                emoji = "🔴"
-                recomendacao = (
-                    "**Ação imediata recomendada:**\n\n"
-                    "- 🧠 Encaminhar para avaliação psicopedagógica urgente\n"
-                    "- 📞 Contato com responsáveis esta semana\n"
-                    "- 📖 Plano de reforço acadêmico personalizado\n"
-                    "- 💙 Apoio psicossocial – verificar contexto familiar"
-                )
-            elif prob >= threshold:
-                nivel = "MÉDIO"
-                css = "risk-medio"
-                emoji = "🟡"
-                recomendacao = (
-                    "**Monitoramento intensificado:**\n\n"
-                    "- 📊 Acompanhar indicadores semanalmente\n"
-                    "- 🎯 Reforçar engajamento em atividades extracurriculares\n"
-                    "- 💬 Conversa individual com o aluno sobre motivação\n"
-                    "- 👀 Observar IPS nas próximas semanas"
-                )
-            else:
-                nivel = "BAIXO"
-                css = "risk-baixo"
-                emoji = "🟢"
-                recomendacao = (
-                    "**Manter e potencializar:**\n\n"
-                    "- ✅ Aluno apresenta bom desempenho geral\n"
-                    "- 🏆 Avaliar indicação para bolsa ou destaque\n"
-                    "- 🚀 Desafiar com atividades de liderança\n"
-                    "- 📈 Manter monitoramento mensal regular"
-                )
-
-            st.markdown(f'<div class="{css}">', unsafe_allow_html=True)
-            st.markdown(f"## {emoji} Risco {nivel} — {pct:.1f}%")
-            st.markdown(recomendacao)
+            risk_details = describe_risk(prob, threshold)
+            st.markdown(f'<div class="{risk_details["css_class"]}">', unsafe_allow_html=True)
+            st.markdown(build_risk_progress_html(prob, risk_details['accent_color']), unsafe_allow_html=True)
+            st.markdown(f"## {risk_details['emoji']} Risco {risk_details['level']} — {pct:.1f}%")
+            st.markdown(risk_details['recommendation'])
             st.markdown("</div>", unsafe_allow_html=True)
 
             st.markdown("\n**Fatores que mais influenciaram esta predição:**")
             fatores = {
-                'Engajamento (IEG)': 10 - ieg_num,
-                'Desempenho (IDA)': 10 - ida_num,
-                'Sentimento Avaliadores': -sent_score,
-                'Psicossocial (IPS)': 10 - ips_num,
-                'Ponto de Virada (IPV)': 10 - ipv_num,
+                'Dimensão Acadêmica': max(0.0, 10 - feature_values['dim_academica']),
+                'Dimensão Psicossocial': max(0.0, 10 - feature_values['dim_psicossocial']),
+                'Dimensão Psicopedagógica': max(0.0, 10 - feature_values['dim_psicopedagogica']),
+                'Evolução de Pedra': max(0.0, feature_values['pedra_21_num'] - feature_values['pedra_22_num']) * 2.5,
+                'Sentimento dos Avaliadores': max(0.0, -feature_values['sent_score']) * 2.0,
             }
             for fator, val in sorted(fatores.items(), key=lambda x: x[1], reverse=True)[:3]:
                 bar_pct = min(max(val/10, 0), 1)
@@ -243,88 +603,78 @@ if pagina == "🔮 Predição Individual":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "📊 Análise da Turma":
     st.header("📊 Análise da Turma – Upload de Dados")
-    st.markdown("Faça upload de uma planilha CSV com os indicadores dos alunos para análise coletiva.")
+    st.markdown(
+        "Faça upload de uma planilha CSV com os indicadores dos alunos para análise coletiva. "
+        "O app deriva automaticamente as **dimensões consolidadas** e o **INDE dinâmico**."
+    )
 
     uploaded = st.file_uploader("📂 Carregar CSV da turma", type=["csv"])
 
-    BATCH_FEATURES = meta.get('features', [
-        'fase','ano_nasc','idade_22','ano_ingresso','cf','ct','no_av',
-        'pedra_22_num','ipp','pedra_21_num','evolucao_pedra','sent_len','sent_score',
-        'cg_num','iaa_num','ieg_num','ips_num','ida_num',
-        'matem_num','portug_num','ingles_num','ipv_num'
-    ])
+    BATCH_FEATURES = meta.get('features', INDIVIDUAL_DEFAULT_FEATURES)
 
     if uploaded:
         try:
             df_up = pd.read_csv(uploaded, encoding='utf-8-sig', sep=',')
-            for c in df_up.columns:
-                df_up[c] = pd.to_numeric(df_up[c].astype(str).str.replace(',','.'), errors='ignore')
-
             st.success(f"✅ {len(df_up)} alunos carregados!")
             st.dataframe(df_up.head(10))
 
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            indicadores_disp = [c for c in ['ida_num','ieg_num','ips_num','iaa_num'] if c in df_up.columns]
+            prepared_df, X_lote = prepare_batch_features(df_up, meta)
             metricas = [col_m1, col_m2, col_m3, col_m4]
-            for i, ind in enumerate(indicadores_disp[:4]):
-                metricas[i].metric(f"Média {ind}", f"{df_up[ind].mean():.2f}")
+            resumo_metricas = [
+                ("Média INDE calc.", prepared_df['inde_calc'].mean()),
+                ("Dim. Acadêmica", prepared_df['dim_academica'].mean()),
+                ("Dim. Psicossocial", prepared_df['dim_psicossocial'].mean()),
+                ("Dim. Psicopedagógica", prepared_df['dim_psicopedagogica'].mean()),
+            ]
+            for i, (titulo, valor) in enumerate(resumo_metricas):
+                metricas[i].metric(titulo, f"{valor:.2f}")
 
             st.subheader("🔮 Predições em Lote")
 
-            # Derivar colunas calculadas se ausentes
-            if 'ipp' not in df_up.columns and 'cf' in df_up.columns and 'ct' in df_up.columns:
-                df_up['ipp'] = (df_up['cf'] + df_up['ct']) / 2
-            if 'evolucao_pedra' not in df_up.columns and 'pedra_22_num' in df_up.columns and 'pedra_21_num' in df_up.columns:
-                df_up['evolucao_pedra'] = df_up['pedra_22_num'] - df_up['pedra_21_num']
-            if 'idade_22' not in df_up.columns and 'ano_nasc' in df_up.columns:
-                df_up['idade_22'] = 2022 - df_up['ano_nasc']
-
-            defaults = {'fase':5,'pedra_22_num':2,'pedra_21_num':2,'evolucao_pedra':0,
-                        'sent_score':0,'sent_len':150,'ipp':5.0,'no_av':3,
-                        'ano_nasc':2010,'idade_22':12,'ano_ingresso':2018,'cg_num':5.0}
-            for col, default in defaults.items():
-                if col not in df_up.columns:
-                    df_up[col] = default
-
-            feat_avail = [f for f in BATCH_FEATURES if f in df_up.columns]
-            X_lote = df_up[feat_avail].fillna(df_up[feat_avail].median(numeric_only=True))
-
-            if model is not None and scaler is not None and len(feat_avail) == len(BATCH_FEATURES):
+            if model is not None and scaler is not None and model_is_usable(model, scaler, meta):
                 X_sc = scaler.transform(X_lote)
-                probs = model.predict_proba(X_sc)[:, 1]
+                probs = apply_probability_calibration(model.predict_proba(X_sc)[:, 1], meta)
             else:
-                # Fallback heurístico
                 probs = (
-                    (10 - df_up.get('ida_num', pd.Series([5.5]*len(df_up))))*0.25 +
-                    (10 - df_up.get('ieg_num', pd.Series([6.0]*len(df_up))))*0.25 +
-                    (10 - df_up.get('ips_num', pd.Series([6.0]*len(df_up))))*0.20 +
-                    (10 - df_up.get('ipp',     pd.Series([5.0]*len(df_up))))*0.15 +
-                    (10 - df_up.get('cg_num',  pd.Series([5.0]*len(df_up))))*0.15
+                    (10 - prepared_df['dim_academica']) * 0.35 +
+                    (10 - prepared_df['dim_psicossocial']) * 0.35 +
+                    (10 - prepared_df['dim_psicopedagogica']) * 0.20 +
+                    np.maximum(0, prepared_df['pedra_21_num'] - prepared_df['pedra_22_num']) * 0.5 +
+                    np.maximum(0, -prepared_df['sent_score']) * 0.2
                 ).clip(0, 10) / 10
 
-            df_up['Prob_Risco_%'] = (probs * 100).round(1)
-            df_up['Nivel_Risco'] = pd.cut(probs, bins=[0,.35,.65,1.01],
-                                           labels=['🟢 Baixo','🟡 Médio','🔴 Alto'])
+            threshold = meta.get('threshold', 0.35) if meta else 0.35
+            prepared_df['Prob_Risco_%'] = (probs * 100).round(1)
+            prepared_df['Nivel_Risco'] = pd.cut(
+                probs,
+                bins=[0, threshold, 0.65, 1.01],
+                labels=['🟢 Baixo', '🟡 Médio', '🔴 Alto'],
+                include_lowest=True,
+            )
 
-            resumo = df_up['Nivel_Risco'].value_counts()
+            resumo = prepared_df['Nivel_Risco'].value_counts()
             cols_res = st.columns(3)
             for i, (nivel, cnt) in enumerate(resumo.items()):
                 cols_res[i % 3].metric(str(nivel), f"{cnt} alunos")
 
             st.markdown("**📋 Alunos em RISCO ALTO (requer atenção imediata):**")
-            alto_risco = df_up[df_up['Nivel_Risco'] == '🔴 Alto']
-            cols_disp = ['Prob_Risco_%'] + [c for c in ['Nome','ida_num','ieg_num','ips_num'] if c in alto_risco.columns]
+            alto_risco = prepared_df[prepared_df['Nivel_Risco'] == '🔴 Alto']
+            cols_disp = ['Prob_Risco_%', 'inde_calc'] + [
+                c for c in ['Nome', 'dim_academica', 'dim_psicossocial', 'dim_psicopedagogica']
+                if c in alto_risco.columns
+            ]
             st.dataframe(alto_risco[cols_disp].sort_values('Prob_Risco_%', ascending=False))
 
-            csv_out = df_up.to_csv(index=False, sep=';').encode('utf-8-sig')
+            csv_out = prepared_df.to_csv(index=False, sep=';').encode('utf-8-sig')
             st.download_button("⬇️ Baixar resultado completo (.csv)", csv_out,
                                "resultado_risco_turma.csv", "text/csv")
         except Exception as e:
             st.error(f"Erro ao processar arquivo: {e}")
     else:
         st.info("👆 Carregue o arquivo CSV com os indicadores da turma.")
-        colunas_str = ', '.join(BATCH_FEATURES[:8]) + ', ...'
-        st.markdown(f"**Colunas esperadas (modelo limpo):** `{colunas_str}`")
+        colunas_str = 'fase, IAN, IDA, IEG, IAA, IPS, IPP ou Cf/Ct, IPV, Pedra 21, Pedra 22, Nº Av'
+        st.markdown(f"**Colunas aceitas/esperadas:** `{colunas_str}`")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PÁGINA 3 – SOBRE O PROJETO
@@ -349,14 +699,13 @@ de desempenho se torne irreversível — permitindo intervenções precisas e r�
 | Componente | Tecnologia |
 |-----------|-----------|
 | Análise exploratória | Pandas, Seaborn, Scipy |
-| Clusterização | K-Means + PCA |
 | NLP | Análise de sentimento lexical |
-| Modelo preditivo | MLP (Keras/TensorFlow) |
+| Modelo preditivo | Regressão logística com dimensões consolidadas |
 | Interface | Streamlit |
 | Deploy | Streamlit Community Cloud |
 
-### 📊 Indicadores do Modelo (sem leakage)
-`IAA · IEG · IPS · IDA · IPV · IPP · Cg · Pedra · Matemática · Português · Inglês · Sentimento NLP`
+### 📊 Lógica do Modelo Atual
+`INDE dinâmico por fase · Dimensão Acadêmica · Dimensão Psicossocial · Dimensão Psicopedagógica · Pedra · Sentimento NLP`
         """)
     st.markdown("---")
     st.markdown("**Datathon 2025-2026 | FIAP Postech – Data Analytics**")

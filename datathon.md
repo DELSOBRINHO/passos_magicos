@@ -1,98 +1,81 @@
-agora estamos na última fase do curso data analitycs e você será um especialista capacitado em ti (considerando todas as matérias estudadas no curso, principalmente as matérias das aulas (item a)) , a fim de projetar e fazer  a entrega do datathom proposto (item b). 
+# Datathon Passos Mágicos — Contexto do Desafio
 
-item a) 
-Fase 5 - Deep Learning and unstructured data
-Fase 5 - Deep Learning and unstructured data
-Welcome to Deep Learning and unstructured data 
-Welcome to Deep Learning and unstructured data    	   
-Deep & Reinforcement Learning 
-Aula 1 - Perceptron de múltiplas camadas    	   
-Aula 2 - Redes convolucionais    	   
-Aula 3 - Transferência de aprendizagem    	   
-Aula 4 - Redes recorrentes    	   
-Aula 5 - Redes não supervisionadas    	   
-Aula 6 - Gans    	   
-Dados Gerados por Humanos 
-Aula 1 - Overview - Dados Gerados por Humanos    	   
-Aula 2 - Introdução e Técnicas de Processamento de Texto    	   
-Aula 3 - Classificação de Texto e Análise de sentimentos    	   
-Aula 4 - Embeddings    	   
-Aula 5 - Estudo de caso: Sistema de Recomendação    	   
-Atividade: a ser entregue até 22/03 - Em grupo 
-Entregue seu Datathon  De 11/12/2025 a 22/03/2026
-Item b) 
-DATATHON
-Case Passos Mágicos
-Mudando a vida de crianças e jovens por meio da educação
-A Associação Passos Mágicos tem uma trajetória de 32 anos de atuação,
-trabalhando na transformação da vida de crianças e jovens de baixa renda, os
-levando a melhores oportunidades de vida. A transformação, idealizada por
-Michelle Flues e Dimetri Ivanoff, começou em 1992, atuando dentro de orfanatos,
-no município de Embu-Guaçu.
-Em 2016, depois de anos de atuação, decidem ampliar o programa para
-que mais jovens tivessem acesso a essa fórmula mágica para transformação
-que inclui: educação de qualidade, auxílio psicológico/psicopedagógico,
-ampliação de sua visão de mundo e protagonismo. Foi então que passaram a
-atuar como um projeto social e educacional, criando assim a Associação Passos
-Mágicos.
-A associação busca instrumentalizar o uso da educação como ferramenta
-para a mudança das condições de vida das crianças e jovens em vulnerabilidade
-social. Com base no dataset de pesquisa extensiva do desenvolvimento
-educacional no período de 2022, 2023 e 2024, você tem um desafio de data
-analytics para trazer um impacto real na vida dessas crianças.
-Utilizando estratégias de analytics aprendidas aqui no curso da Postech,
-você tem o desafio de responder algumas dores de negócio listadas neste
-documento, em um formato de apresentação gerencial e analítico, contando uma
-história com os dados, trazendo resposta às perguntas, sugerindo oportunidade
-de melhoria no processo atual. Além da prática de análise de dados e storytelling,
-esse desafio também traz o desafio do desenvolvimento de um modelo preditivo.
+> Este arquivo resume o enunciado do case. A direção executiva do projeto está em `documentation/PLANO_MESTRE.md`.
 
-Você pode conhecer mais sobre o projeto aqui:
-Perguntas para ser respondidas na análise:
-1. Adequação do nível (IAN): Qual é o perfil geral de defasagem dos
-alunos (IAN) e como ele evolui ao longo do ano?
-(Ex.: quantos alunos estão moderadamente ou severamente defasados?)
-2. Desempenho acadêmico (IDA): O desempenho acadêmico médio
-(IDA) está melhorando, estagnado ou caindo ao longo das fases e anos?
-3. Engajamento nas atividades (IEG): O grau de engajamento dos
-alunos (IEG) tem relação direta com seus indicadores de desempenho (IDA) e
-do ponto de virada (IPV)?
-4. Autoavaliação (IAA): As percepções dos alunos sobre si mesmos
-(IAA) são coerentes com seu desempenho real (IDA) e engajamento (IEG)?
-5. Aspectos psicossociais (IPS): Há padrões psicossociais (IPS) que
-antecedem quedas de desempenho acadêmico ou de engajamento?
-6. Aspectos psicopedagógicos (IPP): As avaliações psicopedagógicas
-(IPP) confirmam ou contradizem a defasagem identificada pelo IAN?
-7. Ponto de virada (IPV): Quais comportamentos - acadêmicos,
-emocionais ou de engajamento - mais influenciam o IPV ao longo do tempo?
-8. Multidimensionalidade dos indicadores: Quais combinações de
-indicadores (IDA + IEG + IPS + IPP) elevam mais a nota global do aluno (INDE)?
-9. Previsão de risco com Machine Learning: Quais padrões nos
-indicadores permitem identificar alunos em risco antes de queda no desempenho
-ou aumento da defasagem? Construa um modelo preditivo que mostre uma
-probabilidade do aluno ou aluna entrar em risco de defasagem.
-10. Efetividade do programa: Os indicadores mostram melhora
-consistente ao longo do ciclo nas diferentes fases (Quartzo, Ágata, Ametista e
-Topázio), confirmando o impacto real do programa?
+## 📘 Papel deste Documento
 
-11. Insights e criatividade: Você pode adicionar mais insights e pontos
-de vista não abordados nas perguntas, utilize a criatividade e a análise dos dados
-para trazer sugestões para a Passos Mágicos.
-Base de dados e dicionário de dados: DATATHON
-Sobre a entrega
-A sua entrega deve conter:
-✓ Link do GitHub contendo os códigos utilizados para a limpeza e análise
-de dados.
-✓ Apresentação do storytelling em um formato de apresentação (pode
-ser um PPT ou PDF).
-✓ Notebook Python com o modelo preditivo da análise de risco de
-defasagem, demonstrando as etapas de: feature engineering;
-separação dos dados em treino e teste; modelagem preditiva;
-avaliação dos resultados;
-✓ Construir uma aplicação no Streamlit para disponibilizar o modelo
-treinado para a Passos Mágicos utilizar como solução preditiva via
-aplicação de dados. Deve ser realizado o deploy da aplicação no
-ambiente Community Cloud.
-✓ Vídeo de até 5 (cinco) minutos com pelo menos uma pessoa do grupo
-para apresentar os resultados da análise, contando todo o storytelling
-e resultados do modelo preditivo.
+Use este arquivo como **contexto do desafio**. Para o estado atual da solução, consulte:
+
+- `documentation/PLANO_MESTRE.md` → direção estratégica
+- `documentation/PLANO_DESENVOLVIMENTO.md` → execução atual do repositório
+- `documentation/INDICE_DATATHON.md` → mapeamento entre entregáveis, perguntas e solução
+
+## 🎓 Contexto Acadêmico
+
+O Datathon pertence à **Fase 5 – Deep Learning & Unstructured Data** do curso FIAP Postech em Data Analytics, cobrindo especialmente:
+
+- Deep & Reinforcement Learning
+- Processamento de texto
+- Classificação de texto e análise de sentimentos
+- Embeddings e dados gerados por humanos
+- Storytelling analítico com foco em impacto social
+
+## 🧩 Caso de Negócio
+
+A Associação Passos Mágicos atua na transformação da vida de crianças e jovens em situação de vulnerabilidade social por meio da educação, apoio psicossocial e desenvolvimento de protagonismo.
+
+O desafio do Datathon é transformar a base PEDE em uma solução analítica capaz de:
+
+- diagnosticar padrões de defasagem educacional
+- identificar alavancas de melhoria
+- apoiar decisões pedagógicas e psicossociais
+- prever risco futuro de defasagem com uma aplicação utilizável pela equipe
+
+## ❓ Perguntas Analíticas do Case
+
+1. **IAN** — Qual é o perfil geral de defasagem dos alunos?
+2. **IDA** — O desempenho acadêmico melhora, cai ou se mantém ao longo das fases?
+3. **IEG** — O engajamento se relaciona com desempenho e ponto de virada?
+4. **IAA** — A autoavaliação é coerente com o desempenho real?
+5. **IPS** — Há sinais psicossociais que antecedem quedas?
+6. **IPP** — A leitura psicopedagógica confirma a defasagem observada?
+7. **IPV** — Quais fatores mais influenciam o ponto de virada?
+8. **INDE** — Quais combinações de indicadores elevam ou reduzem o desempenho global?
+9. **Predição de risco** — Como estimar a probabilidade de um aluno entrar em risco de defasagem?
+10. **Efetividade do programa** — Há melhora consistente ao longo da jornada das pedras?
+11. **Insights extras** — Que recomendações adicionais podem ser propostas à associação?
+
+## 📦 Entregáveis Esperados
+
+O case pede:
+
+- repositório GitHub com código de limpeza, análise e modelagem
+- apresentação executiva em PPT ou PDF
+- notebook(s) com feature engineering, treino/teste, modelagem e avaliação
+- aplicação em Streamlit com deploy no Community Cloud
+- vídeo curto apresentando storytelling e solução preditiva
+
+## 🔗 Como este Repositório Responde ao Enunciado
+
+Em alinhamento ao plano mestre, o repositório atual organiza a solução em quatro frentes operacionais:
+
+1. **Harmonização dos indicadores do PEDE**
+2. **Leitura textual das observações via NLP lexical**
+3. **Predição com dimensões consolidadas e probabilidade calibrada**
+4. **App Streamlit com predição individual e análise da turma**
+
+Na pergunta 9, a operacionalização atual está centrada em:
+
+- **INDE dinâmico por fase**
+- **dimensões Acadêmica, Psicossocial e Psicopedagógica**
+- **contexto de fase, pedras e número de avaliações**
+- **sinais textuais derivados das observações dos avaliadores**
+
+## 🪨 Storytelling Proposto
+
+O fio narrativo adotado no plano mestre é **“A Jornada da Pedra”**, conectando:
+
+- diagnóstico atual
+- fatores de risco e de proteção
+- identificação precoce
+- intervenções práticas com impacto social

@@ -1,0 +1,40 @@
+{
+  "train_shape": [
+    688,
+    25
+  ],
+  "test_shape": [
+    172,
+    25
+  ],
+  "auc": 1.0,
+  "accuracy": 1.0,
+  "class_report": {
+    "0": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 52.0
+    },
+    "1": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 120.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 172.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 172.0
+    }
+  },
+  "num_features": 25
+}

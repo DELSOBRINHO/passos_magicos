@@ -1,0 +1,37 @@
+{
+  "csv_shape": [
+    860,
+    62
+  ],
+  "num_features": 25,
+  "train_shape": [
+    688,
+    25
+  ],
+  "test_shape": [
+    172,
+    25
+  ],
+  "y_train_dist": {
+    "1": 481,
+    "0": 207
+  },
+  "y_test_dist": {
+    "1": 120,
+    "0": 52
+  },
+  "convert_candidates": [
+    "inde_22",
+    "cg",
+    "iaa",
+    "ieg",
+    "ips",
+    "ida",
+    "matem",
+    "portug",
+    "ingles",
+    "ipv",
+    "ian"
+  ],
+  "inde_col_used": "inde_22_num"
+}

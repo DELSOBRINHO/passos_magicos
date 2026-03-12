@@ -1,0 +1,38 @@
+{
+  "df_shape": [
+    860,
+    62
+  ],
+  "num_features": 23,
+  "features": [
+    "fase",
+    "ano_nasc",
+    "idade_22",
+    "ano_ingresso",
+    "cf",
+    "ct",
+    "no_av",
+    "pedra_22_num",
+    "ipp",
+    "pedra_21_num",
+    "evolucao_pedra",
+    "sent_len",
+    "sent_score",
+    "cg_num",
+    "iaa_num",
+    "ieg_num",
+    "ips_num",
+    "ida_num",
+    "matem_num",
+    "portug_num",
+    "ingles_num",
+    "ipv_num",
+    "ian_num"
+  ],
+  "cv_auc_mean": 1.0,
+  "cv_auc_std": 0.0,
+  "y_distribution": {
+    "1": 601,
+    "0": 259
+  }
+}

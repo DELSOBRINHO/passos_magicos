@@ -66,6 +66,12 @@ passos_magicos/
 pip install -r requirements.txt
 ```
 
+### 1.1 Para notebooks e reprodução completa do pipeline
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 ### 2. Rodar o Streamlit localmente
 
 ```bash
@@ -73,6 +79,11 @@ python -m streamlit run app/app.py
 ```
 
 Depois acesse: `http://localhost:8501`
+
+### 3. Executar o notebook do modelo preditivo
+
+O notebook `notebooks/02_modelo_preditivo.ipynb` foi alinhado ao pipeline operacional atual.
+Ao rodá-lo, ele gera/atualiza os artefatos `clean` usados pelo app e pode ser salvo também como versão executada (`02_modelo_preditivo.executed.ipynb`).
 
 ## ☁️ Deploy no Streamlit Community Cloud
 
@@ -125,6 +136,8 @@ Observações importantes:
 
 - o **plano mestre** posiciona a frente preditiva dentro do eixo de Deep Learning da fase
 - o **estado operacional atual do repositório** está implementado com modelo probabilístico tabular serializado via `joblib`, usando dimensões consolidadas e calibração de probabilidade
+- o notebook `notebooks/02_modelo_preditivo.ipynb` foi atualizado para documentar exatamente esse pipeline operacional vigente
+- a execução do notebook gera os artefatos `app/modelo_risco_clean.pkl`, `app/scaler_clean.pkl`, `app/modelo_risco_clean_imputer.pkl` e `app/modelo_meta_clean.json`
 - o threshold é lido do metadado do modelo; no artefato clean atual, ele está em **0.30**
 
 ## 📊 Entregáveis Cobertos no Repositório
@@ -141,10 +154,12 @@ Verificações automatizadas já executadas no repositório:
 
 - `python -m py_compile app/app.py app/ui_helpers.py`
 - `python -m pytest tests -q`
+- execução end-to-end de `notebooks/02_modelo_preditivo.ipynb`, com geração de `notebooks/02_modelo_preditivo.executed.ipynb`
 
 Resultado mais recente:
 
 - **7 testes passando**
+- notebook 02 executado com sucesso sobre a base PEDE (`860 x 42`), AUC de teste `0.9996` e artefatos clean regenerados
 
 ## 🛠️ Tecnologias
 

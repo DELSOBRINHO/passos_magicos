@@ -16,7 +16,7 @@
   "target_description": "INDE 22 < 6.5",
   "probability_calibration": {
     "method": "logit_temperature",
-    "clip_epsilon": 1e-6,
+    "clip_epsilon": 1e-06,
     "temperature": 3.5,
     "bias": 3.8,
     "description": "Pós-calibração para reduzir saturação e melhorar discriminação entre perfis médio e crítico."
